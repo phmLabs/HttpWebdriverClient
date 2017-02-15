@@ -1,6 +1,6 @@
 {
   "name": "phmlabs/httpwebdriveradapter",
-  "description": "Smoke can be used to check if a web platform is basically working.",
+  "description": "",
   "require": {
     "php": ">= 5.4.0",
     "guzzlehttp/psr7": "^1.3",

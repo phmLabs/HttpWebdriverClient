@@ -2,14 +2,27 @@
 
 namespace phm\HttpWebdriverClient\Http;
 
+use Psr\Http\Message\RequestInterface;
+
 class Response
 {
     private $body;
     private $requests;
 
-    public function __construct($body, $requests)
+    /**
+     * @var RequestInterface
+     */
+    private $request;
+
+    public function getRequest()
+    {
+        return $this->request;
+    }
+
+    public function __construct($body, $requests, RequestInterface $request)
     {
         $this->requests = $requests;
+        $this->request = $request;
     }
 
     public function getBody()
@@ -17,16 +30,18 @@ class Response
         return $this->body;
     }
 
-    public function hasRequest($urlPattern)
+    public function getRequestCount($urlPattern)
     {
+        $foundCount = 0;
+
         foreach ($this->requests as $request) {
             $url = $request['name'];
             if (preg_match('`' . $urlPattern . '`', $url)) {
-                return true;
+                ++$foundCount;
             }
         }
 
-        return false;
+        return $foundCount;
     }
 
     public function getRequests()

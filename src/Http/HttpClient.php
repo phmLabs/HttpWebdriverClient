@@ -6,8 +6,9 @@ use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Psr\Http\Message\RequestInterface;
+use whm\Html\Uri;
 
-class HttpAdapter
+class HttpClient
 {
     private $webdriverHost;
     private $webdriverPort;
@@ -37,21 +38,29 @@ class HttpAdapter
     {
         $options = new ChromeOptions();
 
-        #$options->addExtensions(array(
-        #    __DIR__ . '/extension/console2var.crx',
-        #    __DIR__ . '/cookie_crx/cookie_extension.crx'
-        #));
+        $uri = $request->getUri();
+
+        $finalUrl = (string)$uri;
+
+        if ($uri instanceof Uri) {
+            if ($uri->hasCookies()) {
+                $options->addExtensions(array(
+                    __DIR__ . '/../../extension/cookie_extension.crx'
+                ));
+                $finalUrl = $finalUrl . '#cookie=' . $uri->getCookieString();
+            }
+        }
 
         $caps = DesiredCapabilities::chrome();
 
         $caps->setCapability(ChromeOptions::CAPABILITY, $options);
 
         $driver = RemoteWebDriver::create($this->getWebdriverHost(), $caps);
-        $driver->get((string)$request->getUri());
+        $driver->get($finalUrl);
 
         $html = $driver->executeScript('return document.documentElement.outerHTML');
         $resources = $driver->executeScript('return performance.getEntriesByType(\'resource\')');
 
-        return new Response($html, $resources);
+        return new Response($html, $resources, $request);
     }
 }
