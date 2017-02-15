@@ -12,16 +12,18 @@ class HttpClient
 {
     private $webdriverHost;
     private $webdriverPort;
+    private $sleepTime;
 
     /**
      * HttpAdapter constructor.
      * @param $webdriverHost
      * @param $webdriverPort
      */
-    public function __construct($webdriverHost = 'localhost', $webdriverPort = '4444')
+    public function __construct($webdriverHost = 'localhost', $webdriverPort = '4444', $sleepTime = 1)
     {
         $this->webdriverHost = $webdriverHost;
         $this->webdriverPort = $webdriverPort;
+        $this->sleepTime = $sleepTime;
     }
 
     private function getWebdriverHost()
@@ -47,26 +49,29 @@ class HttpClient
         if ($uri instanceof Uri) {
             if ($uri->hasCookies()) {
                 $options->addExtensions(array(
-                    __DIR__ . '/../../extension/cookie_extension.crx'
+                    __DIR__ . '/../../extension/cookie_extension.crx',
+                    __DIR__ . '/../../extension/requests.crx'
                 ));
                 $finalUrl = $finalUrl . '#cookie=' . $uri->getCookieString();
             }
+        } else {
+            $options->addExtensions(array(
+                __DIR__ . '/../../extension/requests.crx'
+            ));
         }
 
         $caps = DesiredCapabilities::chrome();
 
         $caps->setCapability(ChromeOptions::CAPABILITY, $options);
 
-
         $driver = RemoteWebDriver::create($this->getWebdriverHost(), $caps);
 
         $driver->get($finalUrl);
-        $driver->executeScript('performance.setResourceTimingBufferSize(400);');
-        sleep(1);
+        $driver->executeScript('performance.setResourceTimingBufferSize(500);');
+        sleep($this->sleepTime);
 
         $html = $driver->executeScript('return document.documentElement.outerHTML');
         $resources = $driver->executeScript('return performance.getEntriesByType(\'resource\')');
-
 
         $driver->takeScreenshot('/tmp/scree.png');
 
