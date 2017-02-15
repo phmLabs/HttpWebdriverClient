@@ -38,6 +38,8 @@ class HttpClient
     {
         $options = new ChromeOptions();
 
+        $options->addArguments(array('--window-size=2024,2000'));
+
         $uri = $request->getUri();
 
         $finalUrl = (string)$uri;
@@ -55,11 +57,18 @@ class HttpClient
 
         $caps->setCapability(ChromeOptions::CAPABILITY, $options);
 
+
         $driver = RemoteWebDriver::create($this->getWebdriverHost(), $caps);
+
         $driver->get($finalUrl);
+        $driver->executeScript('performance.setResourceTimingBufferSize(400);');
+        sleep(1);
 
         $html = $driver->executeScript('return document.documentElement.outerHTML');
         $resources = $driver->executeScript('return performance.getEntriesByType(\'resource\')');
+
+
+        $driver->takeScreenshot('/tmp/scree.png');
 
         if (isset($driver)) {
             $driver->quit();
