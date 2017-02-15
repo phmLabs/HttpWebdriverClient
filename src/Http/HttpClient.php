@@ -61,6 +61,10 @@ class HttpClient
         $html = $driver->executeScript('return document.documentElement.outerHTML');
         $resources = $driver->executeScript('return performance.getEntriesByType(\'resource\')');
 
+        if (isset($driver)) {
+            $driver->quit();
+        }
+
         return new Response($html, $resources, $request);
     }
 }
