@@ -50,10 +50,12 @@ class CacheDecorator implements HttpClient
             return $this->unserialseResponse($serializedResponse);
         } else {
             $response = $this->client->sendRequest($request);
+
             $cacheItem = new CacheItem($key);
             $cacheItem->set($this->serialzeResponse($response));
             $cacheItem->expiresAfter($this->expiresAfter);
             $this->cacheItemPool->save($cacheItem);
+
             return $response;
         }
     }

@@ -1,10 +1,15 @@
-chrome.webRequest.onBeforeRequest.addListener(
+chrome.webRequest.onHeadersReceived.addListener(
     function (info) {
-        chrome.tabs.executeScript(
-            info.tabId,
-            {"code": 'document.body.insertAdjacentHTML( \'afterbegin\', \'<div class="request">' + info.url + '</div>\');'}
-        );
+        if (info.type == 'main_frame') {
+            headerString = btoa(JSON.stringify(info.responseHeaders));
+
+            chrome.cookies.set({
+                "name": "__leankoala_headers",
+                "url": info.url,
+                "value": headerString
+            });
+        }
     },
     {urls: ['<all_urls>']},
-    ["blocking"]
+    ["blocking", "responseHeaders"]
 );

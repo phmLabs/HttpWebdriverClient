@@ -6,8 +6,16 @@ use Psr\Http\Message\RequestInterface;
 
 class Response
 {
+    /**
+     * The html body
+     *
+     * @var String
+     */
     private $body;
+
     private $requests;
+
+    private $headers = [];
 
     /**
      * @var RequestInterface
@@ -19,10 +27,12 @@ class Response
         return $this->request;
     }
 
-    public function __construct($body, $requests, RequestInterface $request)
+    public function __construct($body, array $requests, RequestInterface $request, $headers = [])
     {
         $this->requests = $requests;
         $this->request = $request;
+        $this->headers = $headers;
+        $this->body = $body;
     }
 
     public function getBody()
@@ -47,5 +57,10 @@ class Response
     public function getRequests()
     {
         return $this->requests;
+    }
+
+    public function getHeaders()
+    {
+        return $this->headers;
     }
 }
