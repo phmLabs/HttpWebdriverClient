@@ -4,9 +4,9 @@ namespace phm\HttpWebdriverClient\Http\Decorator;
 
 use Cache\Adapter\Common\CacheItem;
 use phm\HttpWebdriverClient\Http\HttpClient;
-use phm\HttpWebdriverClient\Http\Response;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class CacheDecorator implements HttpClient
 {
@@ -20,7 +20,7 @@ class CacheDecorator implements HttpClient
         return md5((string)$request->getUri() . json_encode($request->getHeaders()) . $request->getMethod());
     }
 
-    private function serialzeResponse(Response $response)
+    private function serialzeResponse(ResponseInterface $response)
     {
         return serialize($response);
     }

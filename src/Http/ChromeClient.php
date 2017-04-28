@@ -6,6 +6,7 @@ use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use whm\Html\Uri;
 
 class ChromeClient implements HttpClient
@@ -82,7 +83,7 @@ class ChromeClient implements HttpClient
 
     /**
      * @param RequestInterface $request
-     * @return Response
+     * @return ResourcesAwareResponse
      * @throws \Exception
      */
     public function sendRequest(RequestInterface $request)
@@ -110,7 +111,9 @@ class ChromeClient implements HttpClient
             $driver->quit();
         }
 
-        return new Response($html, $resources, $request, $headers);
+        $response = new ChromeResponse(200, $html, $request, $resources, $headers);
+
+        return $response;
     }
 
     private function getHeaders(RemoteWebDriver $driver)
@@ -119,6 +122,12 @@ class ChromeClient implements HttpClient
         $headerInfosJson = base64_decode($headerInfosBase['value']);
         $headerInfos = json_decode($headerInfosJson);
 
-        return $headerInfos;
+        $headers = [];
+
+        foreach ($headerInfos as $headerInfo) {
+            $headers[$headerInfo->name] = $headerInfo->value;
+        }
+
+        return $headers;
     }
 }

@@ -3,6 +3,8 @@
 namespace phm\HttpWebdriverClient\Http;
 
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
 
 class Response
 {
