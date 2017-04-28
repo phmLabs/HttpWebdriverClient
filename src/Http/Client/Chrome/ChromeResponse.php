@@ -1,12 +1,13 @@
 <?php
 
-namespace phm\HttpWebdriverClient\Http;
 
+namespace phm\HttpWebdriverClient\Http\Client\Chrome;
+
+use phm\HttpWebdriverClient\Http\Response\DetailedResponse;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
-class ChromeResponse implements ResourcesAwareResponse, DurationAwareResponse, \JsonSerializable
+class ChromeResponse implements DetailedResponse, \JsonSerializable
 {
     private $statusCode;
     private $body;
@@ -15,6 +16,17 @@ class ChromeResponse implements ResourcesAwareResponse, DurationAwareResponse, \
     private $resources = [];
     private $request;
     private $duration;
+
+    private function normalizeHeaders($headers = [])
+    {
+        $normalizedHeaders = [];
+
+        foreach ($headers as $key => $value) {
+            $normalizedHeaders[strtolower($key)] = $value;
+        }
+
+        return $normalizedHeaders;
+    }
 
     /**
      * ChromeResponse constructor.
@@ -28,7 +40,7 @@ class ChromeResponse implements ResourcesAwareResponse, DurationAwareResponse, \
     {
         $this->statusCode = $statusCode;
         $this->body = $body;
-        $this->headers = $headers;
+        $this->headers = $this->normalizeHeaders($headers);
         $this->request = $request;
         $this->resources = $resources;
     }
@@ -57,13 +69,13 @@ class ChromeResponse implements ResourcesAwareResponse, DurationAwareResponse, \
 
     public function hasHeader($name)
     {
-        return array_key_exists($name, $this->headers);
+        return array_key_exists(strtolower($name), $this->headers);
     }
 
     public function getHeader($name)
     {
-        if ($this->getHeader($name)) {
-            return $this->headers['name'];
+        if ($this->hasHeader($name)) {
+            return $this->headers[strtolower($name)];
         } else {
             throw new \RuntimeException('Header with name "' . $name . '" not found.');
         }
@@ -72,7 +84,7 @@ class ChromeResponse implements ResourcesAwareResponse, DurationAwareResponse, \
     public function getHeaderLine($name)
     {
         if ($this->hasHeader($name)) {
-            return $this->headers[$name];
+            return $this->headers[strtolower($name)];
         } else {
             throw new \RuntimeException('Header with name "' . $name . '" not found.');
         }
@@ -86,7 +98,7 @@ class ChromeResponse implements ResourcesAwareResponse, DurationAwareResponse, \
     public function withAddedHeader($name, $value)
     {
         $headers = array_merge($this->headers, [$name => $value]);
-        return new self($this->statusCode, $this->body, $headers);
+        return new self($this->statusCode, $this->body, $this->request, $this->resources, $headers);
     }
 
     public function withoutHeader($name)
@@ -97,7 +109,7 @@ class ChromeResponse implements ResourcesAwareResponse, DurationAwareResponse, \
             unset($headers[$name]);
         }
 
-        return new self($this->statusCode, $this->body, $headers);
+        return new self($this->statusCode, $this->body, $this->request, $this->resources, $headers);
     }
 
     public function getBody()
@@ -105,9 +117,14 @@ class ChromeResponse implements ResourcesAwareResponse, DurationAwareResponse, \
         return $this->body;
     }
 
+    public function setBody($body)
+    {
+        $this->body = $body;
+    }
+
     public function withBody(StreamInterface $body)
     {
-        return new self($this->statusCode, (string)$body, $this->headers);
+        return new self($this->statusCode, (string)$body, $this->request, $this->resources, $this->headers);
     }
 
     public function getStatusCode()
@@ -117,7 +134,7 @@ class ChromeResponse implements ResourcesAwareResponse, DurationAwareResponse, \
 
     public function withStatus($code, $reasonPhrase = '')
     {
-        return new self($code, $this->body, $this->headers);
+        return new self($code, $this->body, $this->request, $this->resources, $this->headers);
     }
 
     public function getReasonPhrase()
@@ -157,6 +174,21 @@ class ChromeResponse implements ResourcesAwareResponse, DurationAwareResponse, \
     public function setDuration($duration)
     {
         $this->duration = $duration;
+    }
+
+    public function getUri()
+    {
+        return $this->getRequest()->getUri();
+    }
+
+    public function getContentType()
+    {
+        if ($this->hasHeader('content-type')) {
+            $exploded = explode(';', $this->getHeader('Content-Type'));
+            return array_shift($exploded);
+        } else {
+            return '';
+        }
     }
 
     function jsonSerialize()

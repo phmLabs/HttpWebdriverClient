@@ -1,12 +1,13 @@
 <?php
 
-namespace phm\HttpWebdriverClient\Http;
+namespace phm\HttpWebdriverClient\Http\Client\Chrome;
 
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use phm\HttpWebdriverClient\Http\Client\HttpClient;
+use phm\HttpWebdriverClient\Http\Response\DetailedResponse;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use whm\Html\Uri;
 
 class ChromeClient implements HttpClient
@@ -54,12 +55,12 @@ class ChromeClient implements HttpClient
 
             if ($withCookieHandling) {
                 $options->addExtensions(array(
-                    __DIR__ . '/../../extension/cookie_extension.crx',
-                    __DIR__ . '/../../extension/requests.crx'
+                    __DIR__ . '/extension/cookie_extension.crx',
+                    __DIR__ . '/extension/requests.crx'
                 ));
             } else {
                 $options->addExtensions(array(
-                    __DIR__ . '/../../extension/requests.crx'
+                    __DIR__ . '/extension/requests.crx'
                 ));
             }
 
@@ -74,6 +75,30 @@ class ChromeClient implements HttpClient
         return $driver;
     }
 
+    private function getResponseInfo(RemoteWebDriver $driver)
+    {
+        $headerInfosBase = $driver->manage()->getCookieNamed(self::COOKIE_HEADER);
+        $headerInfosJson = base64_decode($headerInfosBase['value']);
+        $responseInfos = json_decode($headerInfosJson);
+
+        $responseHeaders = $responseInfos->responseHeaders;
+
+        $headers = [];
+
+        foreach ($responseHeaders as $headerInfo) {
+            $headers[$headerInfo->name] = $headerInfo->value;
+        }
+
+        preg_match('@HTTP/(.*?) @', $responseInfos->statusLine, $matches);
+        $protocol = $matches[1];
+
+        return [
+            'headers' => $headers,
+            'statusCode' => $responseInfos->statusCode,
+            'protocol' => $protocol
+        ];
+    }
+
     public function __destruct()
     {
         if ($this->driver) {
@@ -83,11 +108,15 @@ class ChromeClient implements HttpClient
 
     /**
      * @param RequestInterface $request
-     * @return ResourcesAwareResponse
+     * @return DetailedResponse
      * @throws \Exception
      */
     public function sendRequest(RequestInterface $request)
     {
+        if ($request->getMethod() != 'GET') {
+            throw new \RuntimeException('The given method "' . $request->getMethod() . '" is supported.');
+        }
+
         $uri = $request->getUri();
 
         $driver = $this->getDriver();
@@ -121,27 +150,24 @@ class ChromeClient implements HttpClient
         return $response;
     }
 
-    private function getResponseInfo(RemoteWebDriver $driver)
+    public function sendRequests(array $requests)
     {
-        $headerInfosBase = $driver->manage()->getCookieNamed(self::COOKIE_HEADER);
-        $headerInfosJson = base64_decode($headerInfosBase['value']);
-        $responseInfos = json_decode($headerInfosJson);
+        $responses = [];
+        $exceptions = [];
 
-        $responseHeaders = $responseInfos->responseHeaders;
-
-        $headers = [];
-
-        foreach ($responseHeaders as $headerInfo) {
-            $headers[$headerInfo->name] = $headerInfo->value;
+        foreach ($requests as $request) {
+            try {
+                $responses[] = $this->sendRequest($request);
+            } catch (\Exception $e) {
+                $exceptions[] = $e;
+            }
         }
 
-        preg_match('@HTTP/(.*?) @', $responseInfos->statusLine, $matches);
-        $protocol = $matches[1];
+        if (count($exceptions) > 0) {
+            throw new MultiRequestsException($exceptions);
+        }
 
-        return [
-            'headers' => $headers,
-            'statusCode' => $responseInfos->statusCode,
-            'protocol' => $protocol
-        ];
+        return $responses;
     }
+
 }
