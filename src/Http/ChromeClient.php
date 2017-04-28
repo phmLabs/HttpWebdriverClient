@@ -102,32 +102,46 @@ class ChromeClient implements HttpClient
         $driver->executeScript('performance.setResourceTimingBufferSize(500);');
         sleep($this->sleepTime);
 
-        $html = $driver->executeScript('return document.documentElement.outerHTML');
-        $resources = $driver->executeScript('return performance.getEntriesByType(\'resource\')');
+        $html = $driver->executeScript('return document.documentElement.outerHTML;');
+        $resources = $driver->executeScript('return performance.getEntriesByType(\'resource\');');
 
-        $headers = $this->getHeaders($driver);
+        $navigation = $driver->executeScript('return performance.timing;');
+        $duration = $navigation['responseStart'] - $navigation['requestStart'];
+
+        $responseInfo = $this->getResponseInfo($driver);
 
         if (isset($driver) && !$this->keepAlive) {
             $driver->quit();
         }
 
-        $response = new ChromeResponse(200, $html, $request, $resources, $headers);
+        $response = new ChromeResponse($responseInfo['statusCode'], $html, $request, $resources, $responseInfo['headers']);
+        $response->setProtocolVersion($responseInfo['protocol']);
+        $response->setDuration($duration);
 
         return $response;
     }
 
-    private function getHeaders(RemoteWebDriver $driver)
+    private function getResponseInfo(RemoteWebDriver $driver)
     {
         $headerInfosBase = $driver->manage()->getCookieNamed(self::COOKIE_HEADER);
         $headerInfosJson = base64_decode($headerInfosBase['value']);
-        $headerInfos = json_decode($headerInfosJson);
+        $responseInfos = json_decode($headerInfosJson);
+
+        $responseHeaders = $responseInfos->responseHeaders;
 
         $headers = [];
 
-        foreach ($headerInfos as $headerInfo) {
+        foreach ($responseHeaders as $headerInfo) {
             $headers[$headerInfo->name] = $headerInfo->value;
         }
 
-        return $headers;
+        preg_match('@HTTP/(.*?) @', $responseInfos->statusLine, $matches);
+        $protocol = $matches[1];
+
+        return [
+            'headers' => $headers,
+            'statusCode' => $responseInfos->statusCode,
+            'protocol' => $protocol
+        ];
     }
 }

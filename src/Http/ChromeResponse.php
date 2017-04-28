@@ -6,7 +6,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
-class ChromeResponse implements ResourcesAwareResponse
+class ChromeResponse implements ResourcesAwareResponse, DurationAwareResponse, \JsonSerializable
 {
     private $statusCode;
     private $body;
@@ -14,6 +14,7 @@ class ChromeResponse implements ResourcesAwareResponse
     private $protocolVersion = null;
     private $resources = [];
     private $request;
+    private $duration;
 
     /**
      * ChromeResponse constructor.
@@ -140,5 +141,31 @@ class ChromeResponse implements ResourcesAwareResponse
     public function getRequest()
     {
         return $this->request;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDuration()
+    {
+        return $this->duration;
+    }
+
+    /**
+     * @param int $duration
+     */
+    public function setDuration($duration)
+    {
+        $this->duration = $duration;
+    }
+
+    function jsonSerialize()
+    {
+        return [
+            'duration' => $this->getDuration(),
+            'headers' => $this->getHeaders(),
+            'protocolVersion' => $this->getProtocolVersion(),
+            'statusCode' => $this->getStatusCode()
+        ];
     }
 }

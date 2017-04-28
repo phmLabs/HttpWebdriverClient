@@ -1,7 +1,7 @@
 chrome.webRequest.onHeadersReceived.addListener(
     function (info) {
         if (info.type == 'main_frame') {
-            headerString = btoa(JSON.stringify(info.responseHeaders));
+            headerString = btoa(JSON.stringify(info));
 
             chrome.cookies.set({
                 "name": "__leankoala_headers",
