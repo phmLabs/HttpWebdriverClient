@@ -6,6 +6,7 @@ use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
+use phm\HttpWebdriverClient\Http\MultiRequestsException;
 use phm\HttpWebdriverClient\Http\Response\DetailedResponse;
 use Psr\Http\Message\RequestInterface;
 use whm\Html\Uri;
@@ -169,5 +170,4 @@ class ChromeClient implements HttpClient
 
         return $responses;
     }
-
 }

@@ -36,11 +36,26 @@ class GuzzleClient implements HttpClient
 
     public function sendRequest(RequestInterface $request)
     {
-        return $this->client->sendRequest($request);
+        return $this->client->sendRequest($this->handleCookies($request));
+    }
+
+    private function handleCookies(RequestInterface $request)
+    {
+        $uri = $request->getUri();
+        if (method_exists($uri, 'hasCookies')) {
+            if ($uri->hasCookies()) {
+                $request = $request->withAddedHeader('Cookie', $uri->getCookieString());
+            }
+        }
+
+        return $request;
     }
 
     public function sendRequests(array $requests)
     {
+        foreach ($requests as $key => $request) {
+            $requests[$key] = $this->handleCookies($request);
+        }
         return $this->client->sendRequests($requests);
     }
 }
