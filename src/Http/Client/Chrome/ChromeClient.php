@@ -170,4 +170,28 @@ class ChromeClient implements HttpClient
 
         return $responses;
     }
+
+    /**
+     * @param string $webdriverHost
+     */
+    public function setWebdriverHost($webdriverHost)
+    {
+        $this->webdriverHost = $webdriverHost;
+    }
+
+    /**
+     * @return string
+     */
+    public function getWebdriverPort()
+    {
+        return $this->webdriverPort;
+    }
+
+    /**
+     * @param string $webdriverPort
+     */
+    public function setWebdriverPort($webdriverPort)
+    {
+        $this->webdriverPort = $webdriverPort;
+    }
 }
