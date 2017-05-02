@@ -152,6 +152,20 @@ class ChromeResponse implements DetailedResponse, \JsonSerializable
         return $this->resources;
     }
 
+    public function getResourceCount($pattern)
+    {
+        $foundCount = 0;
+
+        foreach ($this->resources as $request) {
+            $url = $request['name'];
+            if (preg_match('`' . $pattern . '`', $url)) {
+                ++$foundCount;
+            }
+        }
+
+        return $foundCount;
+    }
+
     /**
      * @return RequestInterface
      */
