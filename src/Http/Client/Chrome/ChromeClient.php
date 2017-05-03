@@ -102,7 +102,13 @@ class ChromeClient implements HttpClient
 
     public function __destruct()
     {
+        $this->close();
+    }
+
+    public function close()
+    {
         if ($this->driver) {
+            var_dump('hier');
             $this->driver->quit();
         }
     }

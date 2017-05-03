@@ -4,7 +4,6 @@ namespace phm\HttpWebdriverClient\Http\Client\Decorator;
 
 use Cache\Adapter\Common\CacheItem;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
-use phm\HttpWebdriverClient\Http\MultiRequestsException;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -15,32 +14,6 @@ class CacheDecorator implements HttpClient
     private $client;
 
     private $expiresAfter;
-
-    private function getHash(RequestInterface $request)
-    {
-        return md5((string)$request->getUri() . json_encode($request->getHeaders()) . $request->getMethod());
-    }
-
-    private function serializeResponse(ResponseInterface $response)
-    {
-        return ['response' => serialize($response), 'body' => (string)$response->getBody()];
-    }
-
-    private function unserializeResponse($serializedResponse)
-    {
-        $response = unserialize($serializedResponse['response']);
-        /** @var ResponseInterface $response */
-        $response->setBody($serializedResponse['body']);
-        return $response;
-    }
-
-    private function cacheResponse($key, ResponseInterface $response)
-    {
-        $cacheItem = new CacheItem($key);
-        $cacheItem->set($this->serializeResponse($response));
-        $cacheItem->expiresAfter($this->expiresAfter);
-        return $this->cacheItemPool->save($cacheItem);
-    }
 
     public function __construct(HttpClient $client, CacheItemPoolInterface $cacheItemPool, $expiresAfter = null)
     {
@@ -90,5 +63,38 @@ class CacheDecorator implements HttpClient
         $responses = array_merge($responses, $newResponses);
 
         return $responses;
+    }
+
+    public function close()
+    {
+        if (method_exists($this->client, 'close')) {
+            $this->client->close();
+        }
+    }
+
+    private function getHash(RequestInterface $request)
+    {
+        return md5((string)$request->getUri() . json_encode($request->getHeaders()) . $request->getMethod());
+    }
+
+    private function serializeResponse(ResponseInterface $response)
+    {
+        return ['response' => serialize($response), 'body' => (string)$response->getBody()];
+    }
+
+    private function unserializeResponse($serializedResponse)
+    {
+        $response = unserialize($serializedResponse['response']);
+        /** @var ResponseInterface $response */
+        $response->setBody($serializedResponse['body']);
+        return $response;
+    }
+
+    private function cacheResponse($key, ResponseInterface $response)
+    {
+        $cacheItem = new CacheItem($key);
+        $cacheItem->set($this->serializeResponse($response));
+        $cacheItem->expiresAfter($this->expiresAfter);
+        return $this->cacheItemPool->save($cacheItem);
     }
 }
