@@ -108,7 +108,6 @@ class ChromeClient implements HttpClient
     public function close()
     {
         if ($this->driver) {
-            var_dump('hier');
             $this->driver->quit();
         }
     }
@@ -175,6 +174,14 @@ class ChromeClient implements HttpClient
         }
 
         return $responses;
+    }
+
+    /**
+     * @param bool $keepAlive
+     */
+    public function setKeepAlive($keepAlive)
+    {
+        $this->keepAlive = $keepAlive;
     }
 
     /**
