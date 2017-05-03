@@ -1,16 +1,11 @@
 <?php
 
 namespace phm\HttpWebdriverClient\Http\Client\Guzzle;
-
-use Ivory\HttpAdapter\Guzzle6HttpAdapter;
+x
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use Psr\Http\Message\RequestInterface;
-use Ivory\HttpAdapter\CurlHttpAdapter;
-use Ivory\HttpAdapter\Event\Subscriber\RedirectSubscriber;
-use Ivory\HttpAdapter\Event\Subscriber\RetrySubscriber;
-use Ivory\HttpAdapter\EventDispatcherHttpAdapter;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-use whm\Crawler\Http\RequestFactory;
+
+use Symfony\Component\EventDispatcher\EventDispatcher;use whm\Crawler\Http\RequestFactory;
 
 class GuzzleClient implements HttpClient
 {
@@ -22,6 +17,7 @@ class GuzzleClient implements HttpClient
         $eventDispatcher->addSubscriber(new RedirectSubscriber());
         $eventDispatcher->addSubscriber(new RetrySubscriber());
         $guessedAdapter = new CurlHttpAdapter();
+
 
         RequestFactory::addStandardHeader('Accept-Encoding', 'gzip');
         RequestFactory::addStandardHeader('Connection', 'keep-alive');
