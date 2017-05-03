@@ -177,6 +177,14 @@ class ChromeClient implements HttpClient
     }
 
     /**
+     * @param bool $keepAlive
+     */
+    public function setKeepAlive($keepAlive)
+    {
+        $this->keepAlive = $keepAlive;
+    }
+
+    /**
      * @param string $webdriverHost
      */
     public function setWebdriverHost($webdriverHost)
