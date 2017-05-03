@@ -75,7 +75,7 @@ class ChromeResponse implements DetailedResponse, \JsonSerializable
     public function getHeader($name)
     {
         if ($this->hasHeader($name)) {
-            return $this->headers[strtolower($name)];
+            return [$this->headers[strtolower($name)]];
         } else {
             throw new \RuntimeException('Header with name "' . $name . '" not found.');
         }

@@ -1,42 +1,39 @@
 <?php
 
 namespace phm\HttpWebdriverClient\Http\Client\Guzzle;
-x
+
+use GuzzleHttp\Client;
+use GuzzleHttp\Promise;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\TransferStats;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use Psr\Http\Message\RequestInterface;
-
-use Symfony\Component\EventDispatcher\EventDispatcher;use whm\Crawler\Http\RequestFactory;
 
 class GuzzleClient implements HttpClient
 {
     private $client;
 
-    public function __construct()
+    private $standardHeaders = [];
+
+    public function __construct($standardHeaders = ['Accept-Encoding' => 'gzip', 'Connection' => 'keep-alive'], $timeout = 10)
     {
-        $eventDispatcher = new EventDispatcher();
-        $eventDispatcher->addSubscriber(new RedirectSubscriber());
-        $eventDispatcher->addSubscriber(new RetrySubscriber());
-        $guessedAdapter = new CurlHttpAdapter();
+        $client = new Client(['headers' => $standardHeaders, 'decode_content' => false, 'timeout' => $timeout]);
+        $this->standardHeaders = $standardHeaders;
 
-
-        RequestFactory::addStandardHeader('Accept-Encoding', 'gzip');
-        RequestFactory::addStandardHeader('Connection', 'keep-alive');
-
-        $adapter = new EventDispatcherHttpAdapter($guessedAdapter, $eventDispatcher);
-        $adapter->getConfiguration()->setTimeout(30);
-        $adapter->getConfiguration()->setMessageFactory(new MessageFactory());
-
-        $this->client = $adapter;
+        $this->client = $client;
     }
 
     public function sendRequest(RequestInterface $request)
     {
-        return $this->client->sendRequest($this->handleCookies($request));
+        $request = $this->handleCookies($request);
+        return $this->client->send($this->handleCookies($request));
     }
 
     private function handleCookies(RequestInterface $request)
     {
         $uri = $request->getUri();
+
+        // @todo use cookie aware interface
         if (method_exists($uri, 'hasCookies')) {
             if ($uri->hasCookies()) {
                 $request = $request->withAddedHeader('Cookie', $uri->getCookieString());
@@ -46,11 +43,49 @@ class GuzzleClient implements HttpClient
         return $request;
     }
 
-    public function sendRequests(array $requests)
+    /**
+     * @param Request $requests
+     * @return GuzzleResponse[]
+     */
+    public function sendRequests(array $requests, $failOnError = false)
     {
         foreach ($requests as $key => $request) {
             $requests[$key] = $this->handleCookies($request);
         }
-        return $this->client->sendRequests($requests);
+
+        $promises = [];
+        $timings = [];
+
+        $params = ['on_stats' => function (TransferStats $stats) use (&$timings) {
+            $timings[(string)($stats->getRequest()->getUri())]['totalTime'] = $stats->getTransferTime();
+        }];
+
+        foreach ($requests as $key => $request) {
+            $guzzleRequest = new Request(
+                $request->getMethod(),
+                $request->getUri(),
+                $request->getHeaders()
+            );
+
+            $promises[$key] = $this->client->sendAsync($guzzleRequest, $params);
+        }
+
+        $results = Promise\settle($promises)->wait();
+
+        $responses = [];
+
+        foreach ($results as $key => $result) {
+            if ($result['state'] == 'fulfilled') {
+                $responses[$key] = new GuzzleResponse($result['value']);
+                $responses[$key]->setUri($requests[$key]->getUri());
+                $responses[$key]->setDuration($timings[(string)$responses[$key]->getUri()]['totalTime'] * 1000);
+            } else {
+                if ($failOnError) {
+                    throw $result['reason'];
+                }
+            }
+        }
+
+        return $responses;
     }
 }
