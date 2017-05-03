@@ -12,7 +12,6 @@ use Ivory\HttpAdapter\EventDispatcherHttpAdapter;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use whm\Crawler\Http\RequestFactory;
 
-
 class GuzzleClient implements HttpClient
 {
     private $client;
