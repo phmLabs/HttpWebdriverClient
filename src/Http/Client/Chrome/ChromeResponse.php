@@ -198,7 +198,7 @@ class ChromeResponse implements DetailedResponse, \JsonSerializable
     public function getContentType()
     {
         if ($this->hasHeader('content-type')) {
-            $exploded = explode(';', $this->getHeader('Content-Type'));
+            $exploded = explode(';', $this->getHeader('content-type')[0]);
             return array_shift($exploded);
         } else {
             return '';
