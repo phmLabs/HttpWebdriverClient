@@ -9,7 +9,10 @@ use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\MultiRequestsException;
 use phm\HttpWebdriverClient\Http\Response\DetailedResponse;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use whm\Html\Uri;
+
+declare(ticks = 1);
 
 class ChromeClient implements HttpClient
 {
@@ -17,6 +20,11 @@ class ChromeClient implements HttpClient
 
     private $webdriverHost;
     private $webdriverPort;
+
+    /**
+     * The time chrome waits for elements to be rendered.
+     * @var int
+     */
     private $sleepTime;
 
     /**
@@ -36,6 +44,20 @@ class ChromeClient implements HttpClient
         $this->webdriverPort = $webdriverPort;
         $this->sleepTime = $sleepTime;
         $this->keepAlive = $keepAlive;
+
+        $this->registerSignalHandling();
+    }
+
+    /**
+     * If the php process gets killed by CTLR-C or timeout --signal=SIGINT
+     */
+    private function registerSignalHandling()
+    {
+        pcntl_signal(SIGINT, function ($signal) {
+            echo 'Process killed by signal ' . $signal . ": closing webdriver connection.\n";
+            $this->close();
+            die(1);
+        });
     }
 
     private function getWebdriverHost()
@@ -44,7 +66,7 @@ class ChromeClient implements HttpClient
     }
 
     /**
-     * @param bool $withCookieHandling
+     * @param boolean $withCookieHandling
      * @return RemoteWebDriver
      */
     private function getDriver($withCookieHandling = true)
@@ -134,6 +156,7 @@ class ChromeClient implements HttpClient
         }
 
         $driver->get($finalUrl);
+
         $driver->executeScript('performance.setResourceTimingBufferSize(500);');
         sleep($this->sleepTime);
 
@@ -156,6 +179,11 @@ class ChromeClient implements HttpClient
         return $response;
     }
 
+    /**
+     * @param RequestInterface[] $requests
+     * @return ChromeResponse[]
+     * @throws MultiRequestsException
+     */
     public function sendRequests(array $requests)
     {
         $responses = [];
@@ -201,7 +229,7 @@ class ChromeClient implements HttpClient
     }
 
     /**
-     * @param string $webdriverPort
+     * @param integer $webdriverPort
      */
     public function setWebdriverPort($webdriverPort)
     {
