@@ -5,13 +5,15 @@ namespace phm\HttpWebdriverClient\Http\Client\Guzzle;
 use GuzzleHttp\Psr7\Response;
 use phm\HttpWebdriverClient\Http\Response\ContentTypeAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\DurationAwareResponse;
+use phm\HttpWebdriverClient\Http\Response\ResourcesAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\UriAwareResponse;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
+use whm\Html\Document;
 
 // @todo at the moment all with-methods are not working as they do nor decorate the response
 
-class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse, UriAwareResponse
+class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse, UriAwareResponse, ResourcesAwareResponse
 {
     private $response;
     private $uri;
@@ -132,5 +134,31 @@ class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse,
     public function getDuration()
     {
         return $this->duration;
+    }
+
+    public function getResources()
+    {
+        $htmlDocument = new Document((string)$this->getBody());
+        $plainResources = $htmlDocument->getDependencies($this->getUri()->withPath(''));
+
+        $resources = [];
+        foreach ($plainResources as $plainResource) {
+            $resources[] = ['name' => $plainResource, 'transferSize' => 0];
+        }
+
+        return $resources;
+    }
+
+    public function getResourceCount($pattern)
+    {
+        $count = 0;
+        $resources = $this->getResources();
+
+        foreach ($resources as $resource) {
+            if (preg_match($pattern, $resource)) {
+                $count++;
+            }
+        }
+        return $count;
     }
 }
