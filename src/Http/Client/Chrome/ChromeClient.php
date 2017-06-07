@@ -5,6 +5,7 @@ namespace phm\HttpWebdriverClient\Http\Client\Chrome;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use GuzzleHttp\Psr7\Stream;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\MultiRequestsException;
 use phm\HttpWebdriverClient\Http\Response\DetailedResponse;
@@ -176,6 +177,23 @@ class ChromeClient implements HttpClient
         $response->setProtocolVersion($responseInfo['protocol']);
         $response->setDuration($duration);
 
+        if (in_array($response->getContentType(), ['text/xml', 'application/xml'])) {
+            $response = $this->createXmlResponse($response);
+        }
+
+        return $response;
+    }
+
+    private function createXmlResponse(ResponseInterface $response)
+    {
+        $html = (string)$response->getBody();
+        if (strpos($html, 'webkit-xml-viewer-source-xml') !== false) {
+            preg_match('#<div id="webkit-xml-viewer-source-xml">(.*?)<\/div>#', $html, $matches);
+            if (count($matches) > 0) {
+                $response = $response->withBody(\GuzzleHttp\Psr7\stream_for($matches[1]));
+            }
+        }
+
         return $response;
     }
 
@@ -197,6 +215,7 @@ class ChromeClient implements HttpClient
             }
         }
 
+        // @todo all requests must be added as well
         if (count($exceptions) > 0) {
             throw new MultiRequestsException($exceptions);
         }
