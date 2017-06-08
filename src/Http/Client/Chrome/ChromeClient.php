@@ -22,6 +22,11 @@ class ChromeClient implements HttpClient
     private $webdriverHost;
     private $webdriverPort;
 
+    private static $contentType = [
+        'xml' => ['text/xml', 'application/xml'],
+        'json' => ['application/json', 'text/json']
+    ];
+
     /**
      * The time chrome waits for elements to be rendered.
      * @var int
@@ -177,18 +182,38 @@ class ChromeClient implements HttpClient
         $response->setProtocolVersion($responseInfo['protocol']);
         $response->setDuration($duration);
 
-        if (in_array($response->getContentType(), ['text/xml', 'application/xml'])) {
-            $response = $this->createXmlResponse($response);
+        if ($this->isContentType($response, 'xml')) {
+            $response = $this->extractXmlResponse($response);
+        } elseif ($this->isContentType($response, 'json')) {
+            $response = $this->extractJsonResponse($response);
         }
 
         return $response;
     }
 
-    private function createXmlResponse(ResponseInterface $response)
+    private function isContentType(ChromeResponse $response, $type)
+    {
+        return (in_array($response->getContentType(), self::$contentType[$type]));
+    }
+
+    private function extractXmlResponse(ResponseInterface $response)
     {
         $html = (string)$response->getBody();
         if (strpos($html, 'webkit-xml-viewer-source-xml') !== false) {
             preg_match('#<div id="webkit-xml-viewer-source-xml">(.*?)<\/div>#', $html, $matches);
+            if (count($matches) > 0) {
+                $response = $response->withBody(\GuzzleHttp\Psr7\stream_for($matches[1]));
+            }
+        }
+
+        return $response;
+    }
+
+    private function extractJsonResponse(ResponseInterface $response)
+    {
+        $html = (string)$response->getBody();
+        if (strpos($html, 'word-wrap: break-word; white-space: pre-wrap;') !== false) {
+            preg_match('#<pre style="word-wrap: break-word; white-space: pre-wrap;">(.*?)<\/pre>#', $html, $matches);
             if (count($matches) > 0) {
                 $response = $response->withBody(\GuzzleHttp\Psr7\stream_for($matches[1]));
             }
