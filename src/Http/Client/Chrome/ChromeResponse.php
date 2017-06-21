@@ -117,6 +117,11 @@ class ChromeResponse implements DetailedResponse, \JsonSerializable
         return $this->body;
     }
 
+    public function getPlainBody()
+    {
+        return $this->body;
+    }
+
     public function setBody($body)
     {
         $this->body = $body;

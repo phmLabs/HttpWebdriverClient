@@ -23,10 +23,15 @@ class GuzzleClient implements HttpClient
         $this->client = $client;
     }
 
+    /**
+     * @param RequestInterface $request
+     * @return GuzzleResponse
+     */
     public function sendRequest(RequestInterface $request)
     {
         $request = $this->handleCookies($request);
-        return $this->client->send($this->handleCookies($request));
+        $response = $this->client->send($this->handleCookies($request));
+        return new GuzzleResponse($response);
     }
 
     private function handleCookies(RequestInterface $request)

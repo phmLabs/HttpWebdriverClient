@@ -86,6 +86,16 @@ class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse,
         return $body;
     }
 
+    /**
+     * Return the plain body although it is compressed
+     *
+     * @return \GuzzleHttp\Psr7\Stream|StreamInterface
+     */
+    public function getPlainBody()
+    {
+        return $this->response->getBody();
+    }
+
     public function withBody(StreamInterface $body)
     {
         return $this->response->withBody($body);
