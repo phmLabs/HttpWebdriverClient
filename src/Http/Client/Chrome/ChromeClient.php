@@ -11,6 +11,7 @@ use phm\HttpWebdriverClient\Http\MultiRequestsException;
 use phm\HttpWebdriverClient\Http\Response\DetailedResponse;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 use whm\Html\Uri;
 
 declare(ticks = 1);
@@ -21,6 +22,8 @@ class ChromeClient implements HttpClient
 
     private $webdriverHost;
     private $webdriverPort;
+
+    private $screenshoots = [];
 
     private static $contentType = [
         'xml' => ['text/xml', 'application/xml'],
@@ -145,26 +148,14 @@ class ChromeClient implements HttpClient
      * @return DetailedResponse
      * @throws \Exception
      */
-    public function sendRequest(RequestInterface $request)
+    public function sendRequest(RequestInterface $request, $createScreenshot = false)
     {
         if ($request->getMethod() != 'GET') {
             throw new \RuntimeException('The given method "' . $request->getMethod() . '" is supported.');
         }
 
         $uri = $request->getUri();
-
-        $driver = $this->getDriver();
-
-        if ($uri instanceof Uri && $uri->hasCookies()) {
-            $finalUrl = (string)$uri . '#cookie=' . $uri->getCookieString();
-        } else {
-            $finalUrl = (string)$uri;
-        }
-
-        $driver->get($finalUrl);
-
-        $driver->executeScript('performance.setResourceTimingBufferSize(500);');
-        sleep($this->sleepTime);
+        $driver = $this->getPreparedDriver($uri);
 
         $html = $driver->executeScript('return document.documentElement.outerHTML;');
         $resources = $driver->executeScript('return performance.getEntriesByType(\'resource\');');
@@ -189,6 +180,24 @@ class ChromeClient implements HttpClient
         }
 
         return $response;
+    }
+
+    private function getPreparedDriver(UriInterface $uri)
+    {
+        $driver = $this->getDriver();
+
+        if ($uri instanceof Uri && $uri->hasCookies()) {
+            $finalUrl = (string)$uri . '#cookie=' . $uri->getCookieString();
+        } else {
+            $finalUrl = (string)$uri;
+        }
+
+        $driver->get($finalUrl);
+
+        $driver->executeScript('performance.setResourceTimingBufferSize(500);');
+        sleep($this->sleepTime);
+
+        return $driver;
     }
 
     private function isContentType(ChromeResponse $response, $type)
@@ -278,5 +287,17 @@ class ChromeClient implements HttpClient
     public function setWebdriverPort($webdriverPort)
     {
         $this->webdriverPort = $webdriverPort;
+    }
+
+    public function createScreenshot(RequestInterface $request)
+    {
+        $tmpFileName = sys_get_temp_dir() . DIRECTORY_SEPARATOR . microtime() . '.png';
+
+        $driver = $this->getPreparedDriver($request->getUri());
+        $driver->takeScreenshot($tmpFileName);
+
+        $image = imagecreatefrompng($tmpFileName);
+
+        return $image;
     }
 }
