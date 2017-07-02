@@ -3,11 +3,13 @@
 namespace phm\HttpWebdriverClient\Http\Client\Guzzle;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\TransferStats;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class GuzzleClient implements HttpClient
 {
@@ -81,16 +83,36 @@ class GuzzleClient implements HttpClient
 
         foreach ($results as $key => $result) {
             if ($result['state'] == 'fulfilled') {
-                $responses[$key] = new GuzzleResponse($result['value']);
-                $responses[$key]->setUri($requests[$key]->getUri());
-                $responses[$key]->setDuration($timings[(string)$responses[$key]->getUri()]['totalTime'] * 1000);
+                $responses[$key] = $this->createGuzzleResponse(
+                    $result['value'],
+                    $requests[$key]->getUri(),
+                    $timings
+                );
             } else {
-                if ($failOnError) {
+                /** @var \GuzzleHttp\Exception\ClientException $exception */
+                $exception = ($result['reason']);
+
+                if ($exception instanceof ClientException) {
+                    $responses[$key] = $this->createGuzzleResponse(
+                        $exception->getResponse(),
+                        $requests[$key]->getUri(),
+                        $timings
+                    );
+                } else if ($failOnError) {
                     throw $result['reason'];
                 }
             }
         }
 
         return $responses;
+    }
+
+    private function createGuzzleResponse(ResponseInterface $response, $uri, $timings)
+    {
+        $guzzleResponse = new GuzzleResponse($response);
+        $guzzleResponse->setUri($uri);
+        $guzzleResponse->setDuration($timings[(string)$guzzleResponse->getUri()]['totalTime'] * 1000);
+
+        return $guzzleResponse;
     }
 }
