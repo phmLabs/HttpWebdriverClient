@@ -295,9 +295,17 @@ class ChromeClient implements HttpClient
 
         $driver = $this->getPreparedDriver($request->getUri());
         $driver->takeScreenshot($tmpFileName);
+        $driver->close();
 
-        $image = imagecreatefrompng($tmpFileName);
+        $image = \imagecreatefrompng($tmpFileName);
 
-        return $image;
+        ob_start();
+        \imagepng($image);
+        $imageString = ob_get_contents();
+        ob_end_clean();
+
+        \imagedestroy($image);
+
+        return $imageString;
     }
 }
