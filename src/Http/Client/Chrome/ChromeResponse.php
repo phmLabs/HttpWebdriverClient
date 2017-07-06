@@ -4,10 +4,12 @@
 namespace phm\HttpWebdriverClient\Http\Client\Chrome;
 
 use phm\HttpWebdriverClient\Http\Response\DetailedResponse;
+use phm\HttpWebdriverClient\Http\Response\EffectiveUriAwareResponse;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UriInterface;
 
-class ChromeResponse implements DetailedResponse, \JsonSerializable
+class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, \JsonSerializable
 {
     private $statusCode;
     private $body;
@@ -16,6 +18,7 @@ class ChromeResponse implements DetailedResponse, \JsonSerializable
     private $resources = [];
     private $request;
     private $duration;
+    private $effectiveUri;
 
     private function normalizeHeaders($headers = [])
     {
@@ -36,13 +39,14 @@ class ChromeResponse implements DetailedResponse, \JsonSerializable
      * @param array $resources
      * @param array $headers
      */
-    public function __construct($statusCode, $body = "", RequestInterface $request, array $resources, array $headers)
+    public function __construct($statusCode, $body = "", RequestInterface $request, array $resources, array $headers, UriInterface $effectiveUri)
     {
         $this->statusCode = $statusCode;
         $this->body = $body;
         $this->headers = $this->normalizeHeaders($headers);
         $this->request = $request;
         $this->resources = $resources;
+        $this->effectiveUri = $effectiveUri;
     }
 
     public function getProtocolVersion()
@@ -208,6 +212,11 @@ class ChromeResponse implements DetailedResponse, \JsonSerializable
         } else {
             return '';
         }
+    }
+
+    public function getEffectiveUri()
+    {
+        return $this->effectiveUri;
     }
 
     function jsonSerialize()

@@ -5,25 +5,37 @@ namespace phm\HttpWebdriverClient\Http\Client\Guzzle;
 use GuzzleHttp\Psr7\Response;
 use phm\HttpWebdriverClient\Http\Response\ContentTypeAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\DurationAwareResponse;
+use phm\HttpWebdriverClient\Http\Response\EffectiveUriAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\ResourcesAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\UriAwareResponse;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 use whm\Html\Document;
 
-// @todo at the moment all with-methods are not working as they do nor decorate the response
+// @todo at the moment all with-methods are not working as they do not decorate the response
 
-class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse, UriAwareResponse, ResourcesAwareResponse
+class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse, UriAwareResponse, ResourcesAwareResponse, EffectiveUriAwareResponse
 {
     private $response;
     private $uri;
     private $duration;
 
+    /**
+     * @var UriInterface
+     */
+    private $effectiveUri;
+
     private $uncompressedBody;
 
-    public function __construct(Response $response)
+    public function __construct(ResponseInterface $response)
     {
         $this->response = $response;
+    }
+
+    public function setEffectiveUri(UriInterface $effectiveUri)
+    {
+        $this->effectiveUri = $effectiveUri;
     }
 
     public function getProtocolVersion()
@@ -170,5 +182,10 @@ class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse,
             }
         }
         return $count;
+    }
+
+    public function getEffectiveUri()
+    {
+        return $this->effectiveUri;
     }
 }

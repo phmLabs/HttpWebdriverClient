@@ -6,10 +6,13 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\TransferStats;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use whm\Html\CookieAware;
 
 class GuzzleClient implements HttpClient
 {
@@ -19,7 +22,12 @@ class GuzzleClient implements HttpClient
 
     public function __construct($standardHeaders = ['Accept-Encoding' => 'gzip', 'Connection' => 'keep-alive'], $timeout = 10)
     {
-        $client = new Client(['headers' => $standardHeaders, 'decode_content' => false, 'timeout' => $timeout]);
+        $client = new Client([
+            'headers' => $standardHeaders,
+            'decode_content' => false,
+            'timeout' => $timeout
+        ]);
+
         $this->standardHeaders = $standardHeaders;
 
         $this->client = $client;
@@ -40,8 +48,7 @@ class GuzzleClient implements HttpClient
     {
         $uri = $request->getUri();
 
-        // @todo use cookie aware interface
-        if (method_exists($uri, 'hasCookies')) {
+        if ($uri instanceof CookieAware) {
             if ($uri->hasCookies()) {
                 $request = $request->withAddedHeader('Cookie', $uri->getCookieString());
             }
@@ -61,10 +68,11 @@ class GuzzleClient implements HttpClient
         }
 
         $promises = [];
-        $timings = [];
+        $stats = [];
 
-        $params = ['on_stats' => function (TransferStats $stats) use (&$timings) {
-            $timings[(string)($stats->getRequest()->getUri())]['totalTime'] = $stats->getTransferTime();
+        $params = ['on_stats' => function (TransferStats $transferStats) use (&$stats) {
+            $stats[(string)($transferStats->getRequest()->getUri())]['totalTime'] = $transferStats->getTransferTime();
+            $stats[(string)($transferStats->getRequest()->getUri())]['effectiveUri'] = $transferStats->getEffectiveUri();
         }];
 
         foreach ($requests as $key => $request) {
@@ -86,7 +94,7 @@ class GuzzleClient implements HttpClient
                 $responses[$key] = $this->createGuzzleResponse(
                     $result['value'],
                     $requests[$key]->getUri(),
-                    $timings
+                    $stats
                 );
             } else {
                 /** @var \GuzzleHttp\Exception\ClientException $exception */
@@ -96,7 +104,7 @@ class GuzzleClient implements HttpClient
                     $responses[$key] = $this->createGuzzleResponse(
                         $exception->getResponse(),
                         $requests[$key]->getUri(),
-                        $timings
+                        $stats
                     );
                 } else if ($failOnError) {
                     throw $result['reason'];
@@ -107,11 +115,12 @@ class GuzzleClient implements HttpClient
         return $responses;
     }
 
-    private function createGuzzleResponse(ResponseInterface $response, $uri, $timings)
+    private function createGuzzleResponse(ResponseInterface $response, $uri, $stats)
     {
         $guzzleResponse = new GuzzleResponse($response);
         $guzzleResponse->setUri($uri);
-        $guzzleResponse->setDuration($timings[(string)$guzzleResponse->getUri()]['totalTime'] * 1000);
+        $guzzleResponse->setDuration($stats[(string)$guzzleResponse->getUri()]['totalTime'] * 1000);
+        $guzzleResponse->setEffectiveUri($stats[(string)$guzzleResponse->getUri()]['effectiveUri']);
 
         return $guzzleResponse;
     }
