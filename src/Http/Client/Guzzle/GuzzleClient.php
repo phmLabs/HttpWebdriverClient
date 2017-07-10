@@ -8,6 +8,7 @@ use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\RedirectMiddleware;
 use GuzzleHttp\TransferStats;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use Psr\Http\Message\RequestInterface;
@@ -25,7 +26,10 @@ class GuzzleClient implements HttpClient
         $client = new Client([
             'headers' => $standardHeaders,
             'decode_content' => false,
-            'timeout' => $timeout
+            'timeout' => $timeout,
+            'allow_redirects' => [
+                'track_redirects' => true
+            ]
         ]);
 
         $this->standardHeaders = $standardHeaders;
@@ -118,9 +122,16 @@ class GuzzleClient implements HttpClient
     private function createGuzzleResponse(ResponseInterface $response, $uri, $stats)
     {
         $guzzleResponse = new GuzzleResponse($response);
+
         $guzzleResponse->setUri($uri);
         $guzzleResponse->setDuration($stats[(string)$guzzleResponse->getUri()]['totalTime'] * 1000);
-        $guzzleResponse->setEffectiveUri($stats[(string)$guzzleResponse->getUri()]['effectiveUri']);
+
+        if ($response->hasHeader(RedirectMiddleware::HISTORY_HEADER)) {
+            $redirectHeader = $response->getHeader(RedirectMiddleware::HISTORY_HEADER);
+            $location = array_pop($redirectHeader);
+            $effectiveUri = new Uri($location);
+            $guzzleResponse->setEffectiveUri($effectiveUri);
+        }
 
         return $guzzleResponse;
     }

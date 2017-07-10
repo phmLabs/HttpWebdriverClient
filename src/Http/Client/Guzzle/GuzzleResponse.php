@@ -186,6 +186,10 @@ class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse,
 
     public function getEffectiveUri()
     {
-        return $this->effectiveUri;
+        if ($this->effectiveUri) {
+            return $this->effectiveUri;
+        } else {
+            return $this->getUri();
+        }
     }
 }
