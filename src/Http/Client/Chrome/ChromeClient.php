@@ -5,7 +5,6 @@ namespace phm\HttpWebdriverClient\Http\Client\Chrome;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
-use GuzzleHttp\Psr7\Stream;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\MultiRequestsException;
 use phm\HttpWebdriverClient\Http\Response\DetailedResponse;
@@ -85,6 +84,8 @@ class ChromeClient implements HttpClient
 
             $options->addArguments(array('--window-size=2024,2000'));
 
+            // $options->addArguments(Proxy = null)
+
             if ($withCookieHandling) {
                 $options->addExtensions(array(
                     __DIR__ . '/extension/cookie_extension.crx',
@@ -99,6 +100,7 @@ class ChromeClient implements HttpClient
             $caps = DesiredCapabilities::chrome();
 
             $caps->setCapability(ChromeOptions::CAPABILITY, $options);
+            // $caps->setCapability(WebDriverCapabilityType::PROXY, null);
 
             $driver = RemoteWebDriver::create($this->getWebdriverHost(), $caps);
         } else {
