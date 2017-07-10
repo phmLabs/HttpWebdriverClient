@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "name": "requestHeaderr",
+  "name": "resourcesRetriever",
   "description": "This extension injects js",
   "version": "1.0",
   "background": {
