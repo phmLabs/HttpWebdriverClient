@@ -164,9 +164,8 @@ class ChromeClient implements HttpClient
 
         $navigation = $driver->executeScript('return performance.timing;');
         $duration = $navigation['responseStart'] - $navigation['requestStart'];
-
-        $effectiveUrl = $driver->execute('return window.location.href;');
-        $effectiveUri = new \GuzzleHttp\Psr7\Uri($effectiveUrl);
+        
+        $effectiveUri = new \GuzzleHttp\Psr7\Uri($driver->getCurrentURL());
 
         $responseInfo = $this->getResponseInfo($driver);
 
