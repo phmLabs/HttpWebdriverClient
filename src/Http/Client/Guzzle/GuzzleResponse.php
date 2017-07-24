@@ -161,7 +161,7 @@ class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse,
     public function getResources()
     {
         $htmlDocument = new Document((string)$this->getBody());
-        $plainResources = $htmlDocument->getDependencies($this->getUri()->withPath(''));
+        $plainResources = $htmlDocument->getDependencies($this->getUri()->withPath(''), false);
 
         $resources = [];
         foreach ($plainResources as $plainResource) {
