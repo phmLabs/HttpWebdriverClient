@@ -1,0 +1,18 @@
+{
+  "manifest_version": 2,
+  "name": "koala_analytics_filter",
+  "description": "This extension injects js",
+  "version": "1.0",
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "permissions": [
+    "<all_urls>",
+    "webRequest",
+    "webRequestBlocking",
+    "storage",
+    "cookies"
+  ]
+}

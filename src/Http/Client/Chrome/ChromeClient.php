@@ -89,11 +89,13 @@ class ChromeClient implements HttpClient
             if ($withCookieHandling) {
                 $options->addExtensions(array(
                     __DIR__ . '/extension/cookie_extension.crx',
-                    __DIR__ . '/extension/requests.crx'
+                    __DIR__ . '/extension/requests.crx',
+                    __DIR__ . '/extension/filter.crx'
                 ));
             } else {
                 $options->addExtensions(array(
-                    __DIR__ . '/extension/requests.crx'
+                    __DIR__ . '/extension/requests.crx',
+                    __DIR__ . '/extension/filter.crx'
                 ));
             }
 
@@ -164,7 +166,7 @@ class ChromeClient implements HttpClient
 
         $navigation = $driver->executeScript('return performance.timing;');
         $duration = $navigation['responseStart'] - $navigation['requestStart'];
-        
+
         $effectiveUri = new \GuzzleHttp\Psr7\Uri($driver->getCurrentURL());
 
         $responseInfo = $this->getResponseInfo($driver);
