@@ -27,6 +27,7 @@ class GuzzleClient implements HttpClient
             'headers' => $standardHeaders,
             'decode_content' => false,
             'timeout' => $timeout,
+            'verify' => false,
             'allow_redirects' => [
                 'track_redirects' => true
             ]

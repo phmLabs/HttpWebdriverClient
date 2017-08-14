@@ -82,7 +82,7 @@ class ChromeClient implements HttpClient
         if (!$this->keepAlive || !$this->driver instanceof RemoteWebDriver) {
             $options = new ChromeOptions();
 
-            $options->addArguments(array('--window-size=2024,2000'));
+            $options->addArguments(array('--window-size=2024,2000', '--ignore-certificate-errors'));
 
             // $options->addArguments(Proxy = null)
 
