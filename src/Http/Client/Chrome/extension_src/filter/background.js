@@ -8,7 +8,8 @@ chrome.webRequest.onBeforeRequest.addListener(
             "*://*.google-analytics.com/collect*",
             "*://*.google-analytics.com/r/collect*",
             "*://*.google-analytics.com/__utm.gif*",
-            "*://*.google-analytics.com/r/__utm.gif*"
+            "*://*.google-analytics.com/r/__utm.gif*",
+            "https://*.webtrekk.net/*/wt*"
         ]
     },
     ["blocking"]
