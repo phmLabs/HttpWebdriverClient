@@ -75,7 +75,7 @@ class CacheDecorator implements HttpClient
 
     private function getHash(RequestInterface $request)
     {
-        $hash = md5((string)$request->getUri() . json_encode($request->getHeaders()) . $request->getMethod());
+        $hash = md5((string)$request->getUri() . json_encode($request->getHeaders()) . $request->getMethod() . $this->client->getClientType());
         return $hash;
     }
 
