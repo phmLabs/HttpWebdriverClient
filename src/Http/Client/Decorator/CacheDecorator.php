@@ -3,6 +3,7 @@
 namespace phm\HttpWebdriverClient\Http\Client\Decorator;
 
 use Cache\Adapter\Common\CacheItem;
+use phm\HttpWebdriverClient\Http\Client\Guzzle\Response;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
@@ -74,7 +75,8 @@ class CacheDecorator implements HttpClient
 
     private function getHash(RequestInterface $request)
     {
-        return md5((string)$request->getUri() . json_encode($request->getHeaders()) . $request->getMethod());
+        $hash = md5((string)$request->getUri() . json_encode($request->getHeaders()) . $request->getMethod());
+        return $hash;
     }
 
     private function serializeResponse(ResponseInterface $response)
@@ -96,5 +98,10 @@ class CacheDecorator implements HttpClient
         $cacheItem->set($this->serializeResponse($response));
         $cacheItem->expiresAfter($this->expiresAfter);
         return $this->cacheItemPool->save($cacheItem);
+    }
+
+    public function getClientType()
+    {
+        return $this->client->getClientType();
     }
 }

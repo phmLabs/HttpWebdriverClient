@@ -21,4 +21,11 @@ interface HttpClient
      * @throws MultiRequestsException
      */
     public function sendRequests(array $requests);
+
+    /**
+     * This function returns the type of the client.
+     *
+     * @return string
+     */
+    public function getClientType();
 }

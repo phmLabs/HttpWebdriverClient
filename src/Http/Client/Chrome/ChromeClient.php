@@ -17,6 +17,8 @@ declare(ticks = 1);
 
 class ChromeClient implements HttpClient
 {
+    const CLIENT_TYPE = "chrome";
+
     const COOKIE_HEADER = '__leankoala_headers';
 
     private $webdriverHost;
@@ -321,5 +323,10 @@ class ChromeClient implements HttpClient
         \imagedestroy($image);
 
         return $imageString;
+    }
+
+    public function getClientType()
+    {
+        return self::CLIENT_TYPE;
     }
 }

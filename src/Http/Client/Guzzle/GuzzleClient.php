@@ -17,6 +17,8 @@ use whm\Html\CookieAware;
 
 class GuzzleClient implements HttpClient
 {
+    const CLIENT_TYPE = "guzzle";
+
     private $client;
 
     private $standardHeaders = [];
@@ -135,5 +137,10 @@ class GuzzleClient implements HttpClient
         }
 
         return $guzzleResponse;
+    }
+
+    public function getClientType()
+    {
+        return self::CLIENT_TYPE;
     }
 }
