@@ -86,18 +86,18 @@ class ChromeClient implements HttpClient
 
             $options->addArguments(array('--window-size=2024,2000', '--ignore-certificate-errors'));
 
-            // $options->addArguments(Proxy = null)
-
             if ($withCookieHandling) {
                 $options->addExtensions(array(
                     __DIR__ . '/extension/cookie_extension.crx',
                     __DIR__ . '/extension/requests.crx',
-                    __DIR__ . '/extension/filter.crx'
+                    __DIR__ . '/extension/filter.crx',
+                    __DIR__ . '/extension/jserror.crx'
                 ));
             } else {
                 $options->addExtensions(array(
                     __DIR__ . '/extension/requests.crx',
-                    __DIR__ . '/extension/filter.crx'
+                    __DIR__ . '/extension/filter.crx',
+                    __DIR__ . '/extension/jserror.crx'
                 ));
             }
 
@@ -169,6 +169,8 @@ class ChromeClient implements HttpClient
         $navigation = $driver->executeScript('return performance.timing;');
         $duration = $navigation['responseStart'] - $navigation['requestStart'];
 
+        $jsErrors = $driver->executeScript("return localStorage.getItem(\"js_errors\")", array());
+
         $effectiveUri = new \GuzzleHttp\Psr7\Uri($driver->getCurrentURL());
 
         $responseInfo = $this->getResponseInfo($driver);
@@ -188,6 +190,7 @@ class ChromeClient implements HttpClient
 
         $response->setProtocolVersion($responseInfo['protocol']);
         $response->setDuration($duration);
+        $response->setJavaScriptErrors($jsErrors);
 
         if ($this->isContentType($response, 'xml')) {
             $response = $this->extractXmlResponse($response);

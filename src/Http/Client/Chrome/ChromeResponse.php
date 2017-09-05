@@ -5,11 +5,12 @@ namespace phm\HttpWebdriverClient\Http\Client\Chrome;
 
 use phm\HttpWebdriverClient\Http\Response\DetailedResponse;
 use phm\HttpWebdriverClient\Http\Response\EffectiveUriAwareResponse;
+use phm\HttpWebdriverClient\Http\Response\JavaScriptAwareResponse;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
-class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, \JsonSerializable
+class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, JavaScriptAwareResponse, \JsonSerializable
 {
     private $statusCode;
     private $body;
@@ -19,6 +20,7 @@ class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, \Js
     private $request;
     private $duration;
     private $effectiveUri;
+    private $jsErrors = [];
 
     private function normalizeHeaders($headers = [])
     {
@@ -217,6 +219,16 @@ class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, \Js
     public function getEffectiveUri()
     {
         return $this->effectiveUri;
+    }
+
+    public function setJavaScriptErrors($jsErrors)
+    {
+        $this->jsErrors = $jsErrors;
+    }
+
+    public function getJavaScriptErrors()
+    {
+        return $this->jsErrors;
     }
 
     function jsonSerialize()
