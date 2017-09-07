@@ -2,12 +2,16 @@
 
 namespace phm\HttpWebdriverClient\Http\Client\Decorator;
 
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use Psr\Http\Message\RequestInterface;
 use Psr\Log\LoggerInterface;
 
 class LoggerDecorator implements HttpClient
 {
+    const DEFAULT_LOG_FILE = '/tmp/log/leankoala.log';
+
     private $client;
 
     /**
@@ -15,10 +19,16 @@ class LoggerDecorator implements HttpClient
      */
     private $logger;
 
-    public function __construct(HttpClient $client, LoggerInterface $logger)
+    public function __construct(HttpClient $client, LoggerInterface $logger = null)
     {
         $this->client = $client;
-        $this->logger = $logger;
+
+        if ($logger) {
+            $this->logger = $logger;
+        } else {
+            $this->logger = new Logger('Client::' . $this->client->getClientType() . '::' . md5(microtime()));
+            $this->logger->pushHandler(new StreamHandler(self::DEFAULT_LOG_FILE, Logger::INFO));
+        }
 
         $this->logger->info('client::__construct - clientType: ' . $this->getClientType());
     }
