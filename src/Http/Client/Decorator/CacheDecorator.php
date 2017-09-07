@@ -19,7 +19,7 @@ class CacheDecorator implements HttpClient
     public function __construct(HttpClient $client, CacheItemPoolInterface $cacheItemPool, $expiresAfter = null)
     {
         if (!$expiresAfter) {
-            $this->expiresAfter = new \DateInterval('PT5M');
+            $this->expiresAfter = new \DateInterval('PT45M');
         } else {
             $this->expiresAfter = $expiresAfter;
         }

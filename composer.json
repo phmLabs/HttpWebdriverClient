@@ -7,7 +7,9 @@
     "guzzlehttp/guzzle": "~6.1.0",
     "facebook/webdriver": "1.1.*",
     "psr/cache": "1.0.*",
-    "cache/filesystem-adapter": "~0.4"
+    "psr/logger": "1.0.*",
+    "cache/filesystem-adapter": "~0.4",
+    "monolog/monolog": "1.22.*"
   },
   "autoload": {
     "psr-4": {

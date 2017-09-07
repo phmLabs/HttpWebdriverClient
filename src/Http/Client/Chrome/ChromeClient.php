@@ -119,7 +119,11 @@ class ChromeClient implements HttpClient
         $headerInfosJson = base64_decode($headerInfosBase['value']);
         $responseInfos = json_decode($headerInfosJson);
 
-        $responseHeaders = $responseInfos->responseHeaders;
+        if (!is_null($responseInfos) && property_exists($responseInfos, 'responseHeaders')) {
+            $responseHeaders = $responseInfos->responseHeaders;
+        } else {
+            throw new \RuntimeException('No response headers were found. Please check the requests browser extension.');
+        }
 
         $headers = [];
 
