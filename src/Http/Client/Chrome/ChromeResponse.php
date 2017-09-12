@@ -104,7 +104,7 @@ class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, Jav
     public function withAddedHeader($name, $value)
     {
         $headers = array_merge($this->headers, [$name => $value]);
-        return new self($this->statusCode, $this->body, $this->request, $this->resources, $headers);
+        return new self($this->statusCode, $this->body, $this->request, $this->resources, $headers, $this->getEffectiveUri());
     }
 
     public function withoutHeader($name)
@@ -115,7 +115,7 @@ class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, Jav
             unset($headers[$name]);
         }
 
-        return new self($this->statusCode, $this->body, $this->request, $this->resources, $headers);
+        return new self($this->statusCode, $this->body, $this->request, $this->resources, $headers, $this->getEffectiveUri());
     }
 
     public function getBody()
@@ -135,7 +135,7 @@ class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, Jav
 
     public function withBody(StreamInterface $body)
     {
-        return new self($this->statusCode, (string)$body, $this->request, $this->resources, $this->headers);
+        return new self($this->statusCode, (string)$body, $this->request, $this->resources, $this->headers, $this->getEffectiveUri());
     }
 
     public function getStatusCode()
@@ -145,7 +145,7 @@ class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, Jav
 
     public function withStatus($code, $reasonPhrase = '')
     {
-        return new self($code, $this->body, $this->request, $this->resources, $this->headers);
+        return new self($code, $this->body, $this->request, $this->resources, $this->headers, $this->getEffectiveUri());
     }
 
     public function getReasonPhrase()
