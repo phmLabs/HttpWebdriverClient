@@ -17,6 +17,10 @@ class FileCacheDecorator extends CacheDecorator
             $cacheDirectory = self::CACHE_DIRECTORY_DEFAULT;
         }
 
+        if (!$expiresAfter) {
+            $expiresAfter = new \DateInterval('PT55M');
+        }
+
         $filesystemAdapter = new Local($cacheDirectory);
         $filesystem = new Filesystem($filesystemAdapter);
         $cachePoolInterface = new FilesystemCachePool($filesystem);
