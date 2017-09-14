@@ -19,6 +19,8 @@ class ChromeClient implements HttpClient
 {
     const CLIENT_TYPE = "chrome";
 
+    const PAGE_LOAD_TIMEOUT = 20;
+
     const COOKIE_HEADER = '__leankoala_headers';
 
     private $webdriverHost;
@@ -106,10 +108,14 @@ class ChromeClient implements HttpClient
             $caps->setCapability(ChromeOptions::CAPABILITY, $options);
             // $caps->setCapability(WebDriverCapabilityType::PROXY, null);
 
+
             $driver = RemoteWebDriver::create($this->getWebdriverHost(), $caps);
         } else {
             $driver = $this->driver;
         }
+
+        $driver->manage()->timeouts()->pageLoadTimeout(self::PAGE_LOAD_TIMEOUT);
+
         return $driver;
     }
 
