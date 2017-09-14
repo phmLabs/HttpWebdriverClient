@@ -125,10 +125,16 @@ class ChromeClient implements HttpClient
         $headerInfosJson = base64_decode($headerInfosBase['value']);
         $responseInfos = json_decode($headerInfosJson);
 
+
         if (!is_null($responseInfos) && property_exists($responseInfos, 'responseHeaders')) {
             $responseHeaders = $responseInfos->responseHeaders;
+            preg_match('@HTTP/(.*?) @', $responseInfos->statusLine, $matches);
+            $protocol = $matches[1];
+            $statusCode = $responseInfos->statusCode;
         } else {
-            throw new \RuntimeException('No response headers were found. Please check the requests browser extension.');
+            $responseHeaders = [];
+            $protocol = 'UNKNOWN';
+            $statusCode = 'UNKNOWN';
         }
 
         $headers = [];
@@ -137,12 +143,9 @@ class ChromeClient implements HttpClient
             $headers[$headerInfo->name] = $headerInfo->value;
         }
 
-        preg_match('@HTTP/(.*?) @', $responseInfos->statusLine, $matches);
-        $protocol = $matches[1];
-
         return [
             'headers' => $headers,
-            'statusCode' => $responseInfos->statusCode,
+            'statusCode' => $statusCode,
             'protocol' => $protocol
         ];
     }
