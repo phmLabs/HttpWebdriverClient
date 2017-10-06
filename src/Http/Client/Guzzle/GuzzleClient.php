@@ -48,7 +48,7 @@ class GuzzleClient implements HttpClient
     {
         $request = $this->handleCookies($request);
         $response = $this->client->send($this->handleCookies($request));
-        return new GuzzleResponse($response);
+        return new GuzzleResponse($response, $request);
     }
 
     private function handleCookies(RequestInterface $request)
@@ -70,6 +70,8 @@ class GuzzleClient implements HttpClient
      */
     public function sendRequests(array $requests, $failOnError = false)
     {
+        var_dump(count($requests));
+
         foreach ($requests as $key => $request) {
             $requests[$key] = $this->handleCookies($request);
         }
@@ -79,7 +81,7 @@ class GuzzleClient implements HttpClient
 
         $params = ['on_stats' => function (TransferStats $transferStats) use (&$stats) {
             $stats[(string)($transferStats->getRequest()->getUri())]['totalTime'] = $transferStats->getTransferTime();
-            $stats[(string)($transferStats->getRequest()->getUri())]['effectiveUri'] = $transferStats->getEffectiveUri();
+            $stats[(string)($transferStats->getRequest()->getUri())]['request'] = $transferStats->getRequest();
         }];
 
         foreach ($requests as $key => $request) {
@@ -128,6 +130,7 @@ class GuzzleClient implements HttpClient
 
         $guzzleResponse->setUri($uri);
         $guzzleResponse->setDuration($stats[(string)$guzzleResponse->getUri()]['totalTime'] * 1000);
+        $guzzleResponse->setRequest($stats[(string)$guzzleResponse->getUri()]['request']);
 
         if ($response->hasHeader(RedirectMiddleware::HISTORY_HEADER)) {
             $redirectHeader = $response->getHeader(RedirectMiddleware::HISTORY_HEADER);

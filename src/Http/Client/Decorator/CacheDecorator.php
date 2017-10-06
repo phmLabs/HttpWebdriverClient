@@ -53,15 +53,16 @@ class CacheDecorator implements HttpClient
             }
         }
 
-        $newResponses = $this->client->sendRequests($requests);
+        if (count($requests) > 0) {
+            $newResponses = $this->client->sendRequests($requests);
 
-        foreach ($newResponses as $newResponse) {
-            /** @var Response $newResponse */
-            $key = $this->getHash($newResponse->getRequest());
-            $this->cacheResponse($key, $newResponse);
+            foreach ($newResponses as $newResponse) {
+                /** @var Response $newResponse */
+                $key = $this->getHash($newResponse->getRequest());
+                $this->cacheResponse($key, $newResponse);
+            }
+            $responses = array_merge($responses, $newResponses);
         }
-
-        $responses = array_merge($responses, $newResponses);
 
         return $responses;
     }
@@ -75,7 +76,15 @@ class CacheDecorator implements HttpClient
 
     private function getHash(RequestInterface $request)
     {
-        $hash = md5((string)$request->getUri() . json_encode($request->getHeaders()) . $request->getMethod() . $this->client->getClientType());
+        $headers = $request->getHeaders();
+
+        if (array_key_exists('User-Agent', $headers)) {
+            if (strpos($headers['User-Agent'][0], 'GuzzleHttp') === 0) {
+                unset($headers['User-Agent']);
+            }
+        }
+        $identifier = (string)$request->getUri() . json_encode($headers) . $request->getMethod() . $this->client->getClientType();
+        $hash = md5($identifier);
         return $hash;
     }
 

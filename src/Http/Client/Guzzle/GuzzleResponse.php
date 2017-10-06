@@ -8,6 +8,7 @@ use phm\HttpWebdriverClient\Http\Response\DurationAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\EffectiveUriAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\ResourcesAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\UriAwareResponse;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
@@ -18,6 +19,7 @@ use whm\Html\Document;
 class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse, UriAwareResponse, ResourcesAwareResponse, EffectiveUriAwareResponse
 {
     private $response;
+    private $request;
     private $uri;
     private $duration;
 
@@ -28,9 +30,18 @@ class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse,
 
     private $uncompressedBody;
 
-    public function __construct(ResponseInterface $response)
+    public function __construct(ResponseInterface $response, RequestInterface $request = null)
     {
         $this->response = $response;
+        $this->request = $request;
+    }
+
+    /**
+     * @param RequestInterface $request
+     */
+    public function setRequest(RequestInterface $request)
+    {
+        $this->request = $request;
     }
 
     public function setEffectiveUri(UriInterface $effectiveUri)
@@ -96,6 +107,12 @@ class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse,
 
         $this->uncompressedBody = $body;
         return $body;
+    }
+
+    public function setBody($body)
+    {
+        $this->uncompressedBody = $body;
+        $this->response->withBody(\GuzzleHttp\Psr7\stream_for($body));
     }
 
     /**
@@ -182,6 +199,14 @@ class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse,
             }
         }
         return $count;
+    }
+
+    /**
+     * @return RequestInterface
+     */
+    public function getRequest()
+    {
+        return $this->request;
     }
 
     public function getEffectiveUri()
