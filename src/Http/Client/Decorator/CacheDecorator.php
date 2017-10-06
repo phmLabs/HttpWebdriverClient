@@ -78,6 +78,7 @@ class CacheDecorator implements HttpClient
     {
         $headers = $request->getHeaders();
 
+        // @todo should  be part of the guzzle client
         if (array_key_exists('User-Agent', $headers)) {
             if (strpos($headers['User-Agent'][0], 'GuzzleHttp') === 0) {
                 unset($headers['User-Agent']);

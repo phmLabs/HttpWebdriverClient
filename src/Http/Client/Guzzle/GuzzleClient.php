@@ -70,8 +70,6 @@ class GuzzleClient implements HttpClient
      */
     public function sendRequests(array $requests, $failOnError = false)
     {
-        var_dump(count($requests));
-
         foreach ($requests as $key => $request) {
             $requests[$key] = $this->handleCookies($request);
         }
