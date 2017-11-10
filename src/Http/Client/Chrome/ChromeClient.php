@@ -108,7 +108,6 @@ class ChromeClient implements HttpClient
             $caps->setCapability(ChromeOptions::CAPABILITY, $options);
             // $caps->setCapability(WebDriverCapabilityType::PROXY, null);
 
-
             $driver = RemoteWebDriver::create($this->getWebdriverHost(), $caps);
         } else {
             $driver = $this->driver;
