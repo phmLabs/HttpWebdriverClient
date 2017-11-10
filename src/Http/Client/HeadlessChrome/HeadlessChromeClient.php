@@ -31,11 +31,6 @@ class HeadlessChromeClient implements HttpClient
 
         $requests = $plainResponse['requests'];
 
-        if (is_null($requests)) {
-            var_dump($responseJson);
-
-        }
-
         $masterRequest = array_pop($requests);
 
         $resources = array();
@@ -44,9 +39,9 @@ class HeadlessChromeClient implements HttpClient
             $resources[] = ['name' => $key];
         }
 
-        var_dump($resources);
-
-        return new HeadlessChromeResponse($masterRequest['http_status'], $plainResponse['bodyHTML'], $request, $resources, $masterRequest['response_headers'], $request->getUri());
+        $response = new HeadlessChromeResponse($masterRequest['http_status'], $plainResponse['bodyHTML'], $request, $resources, $masterRequest['response_headers'], $request->getUri());
+        $response->setJavaScriptErrors($plainResponse['js_errors']);
+        return $response;
     }
 
     public function sendRequests(array $requests)

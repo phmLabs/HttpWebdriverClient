@@ -14,6 +14,7 @@ async function screenshot(browser, url) {
         result.request_success = 0;
         result.request_failed = 0;
         result.requests = {};
+        result.js_errors = [];
 
         page.on("error", async function (err) {
             console.log("ERROR with URL: " + err);
@@ -21,7 +22,7 @@ async function screenshot(browser, url) {
         });
 
         page.on("pageerror", async function (err) {
-            console.log("ERROR with URL: " + err);
+            result.js_errors.push(err.message);
             return;
         });
 
@@ -116,9 +117,9 @@ async function call(url, timeout) {
     }
 }
 
-var args = process.argv.slice(2);
+let args = process.argv.slice(2);
 
-var url = args[0];
-var timeout = args[1];
+let url = args[0];
+let timeout = args[1];
 
 call(url, timeout);
