@@ -14,6 +14,7 @@ class HeadlessChromeClient implements HttpClient
     {
         exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js', $output, $return);
         var_dump($output);
+        var_dump($return);
         return new HeadlessChromeResponse(200, "", $request, [], [], $request->getUri());
     }
 
