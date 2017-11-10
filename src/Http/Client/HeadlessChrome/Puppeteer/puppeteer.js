@@ -7,18 +7,6 @@ async function screenshot(browser, url) {
         const page = await browser.newPage();
         await page.setRequestInterceptionEnabled(true);
 
-        const resultFile = 'result.json';
-
-        const viewport = {
-            "width": 1000,
-            "height": 800,
-            "scale": 1,
-            "isMobile": true,
-            "hasTouch": false,
-            "isLandscape": false
-        };
-
-
         let result = {};
         result.url = url;
         result.pageSize = 0;
@@ -27,6 +15,10 @@ async function screenshot(browser, url) {
         result.request_failed = 0;
         result.requests = {};
 
+        page.on("error", async function (err) {
+            console.log("ERROR with URL: " + err);
+            return;
+        });
 
         page.on("pageerror", async function (err) {
             console.log("ERROR with URL: " + err);
@@ -48,7 +40,6 @@ async function screenshot(browser, url) {
             request.continue();
         });
 
-
         page.on('response', response => {
             let ts = new Date().valueOf();
             //process.stdout.write('.');
@@ -59,7 +50,7 @@ async function screenshot(browser, url) {
 
             result.requests[response.url].response_headers = response.headers;
 
-            if(response.headers['content-length']) {
+            if (response.headers['content-length']) {
                 result.requests[response.url].size = response.headers['content-length'];
                 result.pageSize += parseInt(response.headers['content-length']);
             } else {
@@ -83,33 +74,34 @@ async function screenshot(browser, url) {
             result.request_failed++;
         });
 
-
-        await page.setViewport(viewport);
-        await page.goto(url, {waitUntil: 'networkidle', 'networkIdleTimeout': 1000});
-
+        // await page.setViewport(viewport);
+        await page.goto(url, {waitUntil: 'networkidle', 'networkIdleTimeout': 1000}).catch(function (err) {
+            let errorObj = {};
+            errorObj.type = 'ERROR';
+            errorObj.message = err.message;
+            console.log(JSON.stringify(errorObj));
+            process.exit(0);
+        });
         result.bodyHTML = await page.content();
-
-        //console.log(JSON.stringify(result,null,2));
-
         resolve(result);
     })
 }
 
 
-async function call() {
+async function call(url, timeout) {
     let browser;
 
     setTimeout(function () {
-        console.log('Timeout!!!!');
+        console.log('TIMEOUT');
         browser.close();
         process.exit(1);
-    }, 30000);
+    }, timeout);
 
     try {
         (async () => {
             browser = await puppeteer.launch({'headless': false, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
-            let result = await screenshot(browser, "https://www.wunderweib.de");
-            console.log(JSON.stringify(result,null,2));
+            let result = await screenshot(browser, url);
+            console.log(JSON.stringify(result, null, 2));
 
             await browser.close();
             process.exit(0);
@@ -124,4 +116,9 @@ async function call() {
     }
 }
 
-call();
+var args = process.argv.slice(2);
+
+var url = args[0];
+var timeout = args[1];
+
+call(url, timeout);
