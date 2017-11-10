@@ -2,6 +2,7 @@
 
 namespace phm\HttpWebdriverClient\Http\Client\HeadlessChrome;
 
+use phm\HttpWebdriverClient\Http\Client\Chrome\ChromeResponse;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use Psr\Http\Message\RequestInterface;
 
@@ -11,7 +12,9 @@ class HeadlessChromeClient implements HttpClient
 
     public function sendRequest(RequestInterface $request)
     {
-        
+        exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js', $output, $return);
+        var_dump($output);
+        return new HeadlessChromeResponse(200, "", $request, [], [], $request->getUri());
     }
 
     public function sendRequests(array $requests)
@@ -22,5 +25,9 @@ class HeadlessChromeClient implements HttpClient
     public function getClientType()
     {
         return self::CLIENT_TYPE;
+    }
+
+    public function close()
+    {
     }
 }
