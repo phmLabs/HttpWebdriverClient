@@ -1,8 +1,14 @@
 "use strict";
 
 const puppeteer = require("puppeteer");
+const fs = require("fs");
+const path = require("path");
 
-async function screenshot(browser, url) {
+const filterFile = path.resolve(__dirname, 'filter.yml');
+
+//var text = fs.readFileSync("./mytext.txt").toString('utf-8');
+
+async function collectData(browser, url) {
     return new Promise(async (resolve, reject) => {
         const page = await browser.newPage();
         await page.setRequestInterceptionEnabled(true);
@@ -26,6 +32,27 @@ async function screenshot(browser, url) {
             return;
         });
 
+        // filter special urls like google analytics collect
+        page.on('request', request => {
+            filteredUrls.forEach((regex) => {
+                if (request.url.match(new RegExp(regex))) {
+                    request.abort();
+                }
+            });
+        });
+
+        // add cookies
+        page.on('request', req => {
+            if (req.url.startsWith(domain)) {
+                let headers = req.headers;
+                headers['referer'] = 'http://www.example.com/';
+                headers['cookie'] = 'somekey=somevalue';
+                req.continue({
+                    headers: headers
+                });
+            }
+        });
+
         page.on('request', request => {
             let ts = new Date().valueOf();
             result.requests[request.url] = {};
@@ -43,7 +70,6 @@ async function screenshot(browser, url) {
 
         page.on('response', response => {
             let ts = new Date().valueOf();
-            //process.stdout.write('.');
 
             result.requests[response.url].time_tfb = ts;
             result.requests[response.url].http_status = response.status;
@@ -75,6 +101,8 @@ async function screenshot(browser, url) {
             result.request_failed++;
         });
 
+        // page.withExtraHeaders({'hallo': 'sebastian'});
+
         // await page.setViewport(viewport);
         await page.goto(url, {waitUntil: 'networkidle', 'networkIdleTimeout': 1000}).catch(function (err) {
             let errorObj = {};
@@ -88,8 +116,7 @@ async function screenshot(browser, url) {
     })
 }
 
-
-async function call(url, timeout) {
+async function call(url, timeout, cookieString) {
     let browser;
 
     setTimeout(function () {
@@ -101,11 +128,12 @@ async function call(url, timeout) {
     try {
         (async () => {
             browser = await puppeteer.launch({'headless': false, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
-            let result = await screenshot(browser, url);
-            console.log(JSON.stringify(result, null, 2));
+            let result = await collectData(browser, url);
+
+            // console.log(JSON.stringify(result, null, 2));
 
             await browser.close();
-            process.exit(0);
+            // process.exit(0);
         })();
     }
     catch (e) {
@@ -121,5 +149,10 @@ let args = process.argv.slice(2);
 
 let url = args[0];
 let timeout = args[1];
+let cookieString = args[2];
+let urlArray = url.split("/");
+let domain = urlArray[0] + "//" + urlArray[2];
 
-call(url, timeout);
+let filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
+
+call(url, timeout, cookieString);
