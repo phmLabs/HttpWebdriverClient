@@ -33,7 +33,7 @@ async function collectData(browser, url) {
         });
 
         page.on('request', request => {
-            let ts = new Date().valueOf();
+            const ts = new Date().valueOf();
             let headers = request.headers;
 
             result.requests[request.url] = {};
@@ -60,7 +60,7 @@ async function collectData(browser, url) {
             if (request.method === 'POST') {
                 result.requests[request.url].postdata = request.postData;
             }
-            
+
             if (result.requests[request.url].abort) {
                 request.abort();
             } else {
@@ -69,9 +69,7 @@ async function collectData(browser, url) {
         });
 
         page.on('response', response => {
-            let ts = new Date().valueOf();
-
-            result.requests[response.url].time_tfb = ts;
+            result.requests[response.url].time_tfb = new Date().valueOf();
             result.requests[response.url].http_status = response.status;
             result.requests[response.url].type = response.request().resourceType;
 
@@ -147,14 +145,14 @@ async function call(url, timeout) {
     }
 }
 
-let args = process.argv.slice(2);
+const args = process.argv.slice(2);
 
-let url = args[0];
-let timeout = args[1] || "29000";
-let cookieString = args[2] || "";
-let urlArray = url.split("/");
-let domain = urlArray[2];
+const url = args[0];
+const timeout = args[1] || "29000";
+const cookieString = args[2] || "";
+const urlArray = url.split("/");
+const domain = urlArray[2];
 
-let filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
+const filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
 
 call(url, timeout, cookieString);
