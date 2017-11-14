@@ -9,7 +9,7 @@ const filterFile = path.resolve(__dirname, 'filter.yml');
 async function collectData(browser, url) {
     return new Promise(async (resolve, reject) => {
         const page = await browser.newPage();
-        await page.setRequestInterceptionEnabled(true);
+        await page.setRequestInterception(true);
 
         let result = {};
         result.url = url;
@@ -110,7 +110,7 @@ async function collectData(browser, url) {
         };
 
         await page.setViewport(viewport);
-        await page.goto(url, {waitUntil: 'networkidle', 'networkIdleTimeout': 1000}).catch(function (err) {
+        await page.goto(url, {waitUntil: 'networkidle2'}).catch(function (err) {
             let errorObj = {};
             errorObj.type = 'error';
             errorObj.message = err.message;
