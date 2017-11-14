@@ -5,6 +5,7 @@ namespace phm\HttpWebdriverClient\Http\Client\HeadlessChrome;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\Client\TimeOutException;
 use Psr\Http\Message\RequestInterface;
+use whm\Html\Uri;
 
 class HeadlessChromeClient implements HttpClient
 {
@@ -14,7 +15,11 @@ class HeadlessChromeClient implements HttpClient
     {
         $file = sys_get_temp_dir() . md5(microtime()) . '.json';
 
-        exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js ' . (string)$request->getUri() . ' 40000 > ' . $file, $output, $return);
+        $uri = $request->getUri();
+        /** @var Uri $uri */
+        $cookieString = $uri->getCookieString();
+
+        exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js ' . (string)$request->getUri() . ' 40000 ' . $cookieString . '> ' . $file, $output, $return);
 
         $responseJson = file_get_contents($file);
         unlink($file);
@@ -25,7 +30,7 @@ class HeadlessChromeClient implements HttpClient
 
         $plainResponse = json_decode($responseJson, true);
 
-        if (array_key_exists('type', $plainResponse) and $plainResponse['type'] == 'ERROR') {
+        if (array_key_exists('type', $plainResponse) and $plainResponse['type'] == 'error') {
             throw new \Exception('Unable to GET ' . (string)$request->getUri() . '. Error message: ' . $plainResponse['message']);
         }
 

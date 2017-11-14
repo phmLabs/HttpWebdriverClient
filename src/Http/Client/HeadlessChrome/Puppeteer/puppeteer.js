@@ -6,8 +6,6 @@ const path = require("path");
 
 const filterFile = path.resolve(__dirname, 'filter.yml');
 
-//var text = fs.readFileSync("./mytext.txt").toString('utf-8');
-
 async function collectData(browser, url) {
     return new Promise(async (resolve, reject) => {
         const page = await browser.newPage();
@@ -23,8 +21,11 @@ async function collectData(browser, url) {
         result.js_errors = [];
 
         page.on("error", async function (err) {
-            console.log("ERROR with URL: " + err);
-            return;
+            let errorObj = {};
+            errorObj.type = 'error';
+            errorObj.message = err.message;
+            console.log(JSON.stringify(errorObj));
+            process.exit(0);
         });
 
         page.on("pageerror", async function (err) {
@@ -64,7 +65,7 @@ async function collectData(browser, url) {
             if (result.requests[request.url].abort) {
                 request.abort();
             } else {
-                request.continue({"headers":headers});
+                request.continue({"headers": headers});
             }
         });
 
@@ -99,15 +100,19 @@ async function collectData(browser, url) {
             result.request_failed++;
         });
 
-        // Add extra HTTP headers for all requests
-        // await page.setExtraHTTPHeaders(
-        //    {'x-update': "1"}
-        // );
+        const viewport = {
+            "width": 2514,
+            "height": 1343,
+            "scale": 1,
+            "isMobile": false,
+            "hasTouch": false,
+            "isLandscape": true
+        };
 
-        // await page.setViewport(viewport);
+        await page.setViewport(viewport);
         await page.goto(url, {waitUntil: 'networkidle', 'networkIdleTimeout': 1000}).catch(function (err) {
             let errorObj = {};
-            errorObj.type = 'ERROR';
+            errorObj.type = 'error';
             errorObj.message = err.message;
             console.log(JSON.stringify(errorObj));
             process.exit(0);
@@ -121,14 +126,15 @@ async function call(url, timeout) {
     let browser;
 
     setTimeout(function () {
-        console.log('TIMEOUT');
-        browser.close();
+        errorObj.type = 'error';
+        errorObj.message = 'Timeout after ' + timeout + ' ms.';
+        console.log(JSON.stringify(errorObj));
         process.exit(1);
     }, timeout);
 
     try {
         (async () => {
-            browser = await puppeteer.launch({'headless': false, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
+            browser = await puppeteer.launch({'headless': true, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
             let result = await collectData(browser, url);
 
             console.log(JSON.stringify(result, null, 2));
@@ -136,8 +142,12 @@ async function call(url, timeout) {
             process.exit(0);
         })();
     }
-    catch (e) {
-        console.log("error occured");
+    catch (err) {
+        let errorObj = {};
+        errorObj.type = 'error';
+        errorObj.message = err.message;
+        console.log(JSON.stringify(errorObj));
+
         if (browser) {
             await browser.close();
             process.exit(1);
@@ -150,6 +160,7 @@ const args = process.argv.slice(2);
 const url = args[0];
 const timeout = args[1] || "29000";
 const cookieString = args[2] || "";
+
 const urlArray = url.split("/");
 const domain = urlArray[2];
 
