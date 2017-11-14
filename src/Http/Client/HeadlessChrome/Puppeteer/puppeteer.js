@@ -114,7 +114,7 @@ async function collectData(browser, url) {
         };
 
         await page.setViewport(viewport);
-        await page.goto(url, {waitUntil: 'networkidle2', timeout: 30}).catch(function (err) {
+        await page.goto(url, {waitUntil: 'networkidle2', timeout: 30000}).catch(function (err) {
             exitError(err.message);
         });
         result.bodyHTML = await page.content();
