@@ -6,6 +6,14 @@ const path = require("path");
 
 const filterFile = path.resolve(__dirname, 'filter.yml');
 
+function exitError(msg) {
+    let errorObj = {};
+    errorObj.type = 'error';
+    errorObj.message = msg;
+    console.log(JSON.stringify(errorObj));
+    process.exit(0);
+}
+
 async function collectData(browser, url) {
     return new Promise(async (resolve, reject) => {
         const page = await browser.newPage();
@@ -21,11 +29,7 @@ async function collectData(browser, url) {
         result.js_errors = [];
 
         page.on("error", async function (err) {
-            let errorObj = {};
-            errorObj.type = 'error';
-            errorObj.message = err.message;
-            console.log(JSON.stringify(errorObj));
-            process.exit(0);
+            exitError(err.msg);
         });
 
         page.on("pageerror", async function (err) {
@@ -110,12 +114,8 @@ async function collectData(browser, url) {
         };
 
         await page.setViewport(viewport);
-        await page.goto(url, {waitUntil: 'networkidle2'}).catch(function (err) {
-            let errorObj = {};
-            errorObj.type = 'error';
-            errorObj.message = err.message;
-            console.log(JSON.stringify(errorObj));
-            process.exit(0);
+        await page.goto(url, {waitUntil: 'networkidle2', timeout: 30}).catch(function (err) {
+            exitError(err.message);
         });
         result.bodyHTML = await page.content();
         resolve(result);
@@ -126,10 +126,7 @@ async function call(url, timeout) {
     let browser;
 
     setTimeout(function () {
-        errorObj.type = 'error';
-        errorObj.message = 'Timeout after ' + timeout + ' ms.';
-        console.log(JSON.stringify(errorObj));
-        process.exit(1);
+        exitError('Timeout after ' + timeout + ' ms.');
     }, timeout);
 
     try {
@@ -143,10 +140,8 @@ async function call(url, timeout) {
         })();
     }
     catch (err) {
-        let errorObj = {};
-        errorObj.type = 'error';
-        errorObj.message = err.message;
-        console.log(JSON.stringify(errorObj));
+
+        exitError(err.message);
 
         if (browser) {
             await browser.close();
