@@ -32,46 +32,44 @@ async function collectData(browser, url) {
             return;
         });
 
-        // filter special urls like google analytics collect
         page.on('request', request => {
-            filteredUrls.forEach((regex) => {
+            const ts = new Date().valueOf();
+            let headers = request.headers;
+
+            result.requests[request.url] = {};
+            result.requests[request.url].time_start = ts;
+
+            result.request_total++;
+
+            // filter special urls like google analytics collect
+            filteredUrls.forEach(regex => {
                 if (request.url.match(new RegExp(regex))) {
-                    request.abort();
+                    result.requests[request.url].abort = true;
                 }
             });
-        });
 
-        // add cookies
-        page.on('request', req => {
-            if (req.url.startsWith(domain)) {
-                let headers = req.headers;
-                headers['referer'] = 'http://www.example.com/';
-                headers['cookie'] = 'somekey=somevalue';
-                req.continue({
-                    headers: headers
-                });
+            // only set cookies, if the domain of the request is the same domain of the main request
+            let originDomain = request.url.split('/');
+            if (originDomain[2] === domain && cookieString !== "") {
+                headers['cookie'] = cookieString;
             }
-        });
+            result.requests[request.url].request_headers = request.headers;
 
-        page.on('request', request => {
-            let ts = new Date().valueOf();
-            result.requests[request.url] = {};
+
             result.requests[request.url].method = request.method;
             if (request.method === 'POST') {
                 result.requests[request.url].postdata = request.postData;
             }
-            result.requests[request.url].request_headers = request.headers;
-            result.requests[request.url].time_start = ts;
 
-            result.request_total++;
-            //process.stdout.write('.');
-            request.continue();
+            if (result.requests[request.url].abort) {
+                request.abort();
+            } else {
+                request.continue({"headers":headers});
+            }
         });
 
         page.on('response', response => {
-            let ts = new Date().valueOf();
-
-            result.requests[response.url].time_tfb = ts;
+            result.requests[response.url].time_tfb = new Date().valueOf();
             result.requests[response.url].http_status = response.status;
             result.requests[response.url].type = response.request().resourceType;
 
@@ -101,7 +99,10 @@ async function collectData(browser, url) {
             result.request_failed++;
         });
 
-        // page.withExtraHeaders({'hallo': 'sebastian'});
+        // Add extra HTTP headers for all requests
+        // await page.setExtraHTTPHeaders(
+        //    {'x-update': "1"}
+        // );
 
         // await page.setViewport(viewport);
         await page.goto(url, {waitUntil: 'networkidle', 'networkIdleTimeout': 1000}).catch(function (err) {
@@ -116,7 +117,7 @@ async function collectData(browser, url) {
     })
 }
 
-async function call(url, timeout, cookieString) {
+async function call(url, timeout) {
     let browser;
 
     setTimeout(function () {
@@ -130,10 +131,9 @@ async function call(url, timeout, cookieString) {
             browser = await puppeteer.launch({'headless': false, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
             let result = await collectData(browser, url);
 
-            // console.log(JSON.stringify(result, null, 2));
-
+            console.log(JSON.stringify(result, null, 2));
             await browser.close();
-            // process.exit(0);
+            process.exit(0);
         })();
     }
     catch (e) {
@@ -145,14 +145,14 @@ async function call(url, timeout, cookieString) {
     }
 }
 
-let args = process.argv.slice(2);
+const args = process.argv.slice(2);
 
-let url = args[0];
-let timeout = args[1];
-let cookieString = args[2];
-let urlArray = url.split("/");
-let domain = urlArray[0] + "//" + urlArray[2];
+const url = args[0];
+const timeout = args[1] || "29000";
+const cookieString = args[2] || "";
+const urlArray = url.split("/");
+const domain = urlArray[2];
 
-let filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
+const filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
 
 call(url, timeout, cookieString);
