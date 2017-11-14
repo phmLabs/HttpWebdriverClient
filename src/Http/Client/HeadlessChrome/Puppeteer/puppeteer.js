@@ -32,7 +32,6 @@ async function collectData(browser, url) {
             return;
         });
 
-        // filter special urls like google analytics collect
         page.on('request', request => {
             let ts = new Date().valueOf();
             let headers = request.headers;
@@ -42,16 +41,17 @@ async function collectData(browser, url) {
 
             result.request_total++;
 
+            // filter special urls like google analytics collect
             filteredUrls.forEach(regex => {
                 if (request.url.match(new RegExp(regex))) {
                     result.requests[request.url].abort = true;
                 }
             });
 
-            if (request.url.startsWith(domain)) {
-                headers['referer'] = 'http://www.example.com/';
-                headers['cookie'] = 'somekey=somevalue';
-                headers['x-jajaja'] = 'checkthisout';
+            // only set cookies, if the domain of the request is the same domain of the main request
+            let originDomain = request.url.split('/');
+            if (originDomain[2] === domain && cookieString !== "") {
+                headers['cookie'] = cookieString;
             }
             result.requests[request.url].request_headers = request.headers;
 
@@ -60,6 +60,7 @@ async function collectData(browser, url) {
             if (request.method === 'POST') {
                 result.requests[request.url].postdata = request.postData;
             }
+            
             if (result.requests[request.url].abort) {
                 request.abort();
             } else {
@@ -100,10 +101,10 @@ async function collectData(browser, url) {
             result.request_failed++;
         });
 
-       // page.setExtraHTTPHeaders({'hallo': 'sebastian'});
-        await page.setExtraHTTPHeaders(
-            {'x-update': "1"}
-        );
+        // Add extra HTTP headers for all requests
+        // await page.setExtraHTTPHeaders(
+        //    {'x-update': "1"}
+        // );
 
         // await page.setViewport(viewport);
         await page.goto(url, {waitUntil: 'networkidle', 'networkIdleTimeout': 1000}).catch(function (err) {
@@ -118,7 +119,7 @@ async function collectData(browser, url) {
     })
 }
 
-async function call(url, timeout, cookieString) {
+async function call(url, timeout) {
     let browser;
 
     setTimeout(function () {
@@ -149,10 +150,10 @@ async function call(url, timeout, cookieString) {
 let args = process.argv.slice(2);
 
 let url = args[0];
-let timeout = args[1];
-let cookieString = args[2];
+let timeout = args[1] || "29000";
+let cookieString = args[2] || "";
 let urlArray = url.split("/");
-let domain = urlArray[0] + "//" + urlArray[2];
+let domain = urlArray[2];
 
 let filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
 
