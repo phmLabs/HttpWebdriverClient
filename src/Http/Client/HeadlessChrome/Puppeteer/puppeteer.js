@@ -34,38 +34,37 @@ async function collectData(browser, url) {
 
         // filter special urls like google analytics collect
         page.on('request', request => {
-            filteredUrls.forEach((regex) => {
+            let ts = new Date().valueOf();
+            let headers = request.headers;
+
+            result.requests[request.url] = {};
+            result.requests[request.url].time_start = ts;
+
+            result.request_total++;
+
+            filteredUrls.forEach(regex => {
                 if (request.url.match(new RegExp(regex))) {
-                    request.abort();
+                    result.requests[request.url].abort = true;
                 }
             });
-        });
 
-        // add cookies
-        page.on('request', req => {
-            if (req.url.startsWith(domain)) {
-                let headers = req.headers;
+            if (request.url.startsWith(domain)) {
                 headers['referer'] = 'http://www.example.com/';
                 headers['cookie'] = 'somekey=somevalue';
-                req.continue({
-                    headers: headers
-                });
+                headers['x-jajaja'] = 'checkthisout';
             }
-        });
+            result.requests[request.url].request_headers = request.headers;
 
-        page.on('request', request => {
-            let ts = new Date().valueOf();
-            result.requests[request.url] = {};
+
             result.requests[request.url].method = request.method;
             if (request.method === 'POST') {
                 result.requests[request.url].postdata = request.postData;
             }
-            result.requests[request.url].request_headers = request.headers;
-            result.requests[request.url].time_start = ts;
-
-            result.request_total++;
-            //process.stdout.write('.');
-            request.continue();
+            if (result.requests[request.url].abort) {
+                request.abort();
+            } else {
+                request.continue({"headers":headers});
+            }
         });
 
         page.on('response', response => {
@@ -101,7 +100,10 @@ async function collectData(browser, url) {
             result.request_failed++;
         });
 
-        // page.withExtraHeaders({'hallo': 'sebastian'});
+       // page.setExtraHTTPHeaders({'hallo': 'sebastian'});
+        await page.setExtraHTTPHeaders(
+            {'x-update': "1"}
+        );
 
         // await page.setViewport(viewport);
         await page.goto(url, {waitUntil: 'networkidle', 'networkIdleTimeout': 1000}).catch(function (err) {
@@ -130,10 +132,9 @@ async function call(url, timeout, cookieString) {
             browser = await puppeteer.launch({'headless': false, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
             let result = await collectData(browser, url);
 
-            // console.log(JSON.stringify(result, null, 2));
-
+            console.log(JSON.stringify(result, null, 2));
             await browser.close();
-            // process.exit(0);
+            process.exit(0);
         })();
     }
     catch (e) {
