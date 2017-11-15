@@ -21,7 +21,7 @@ class HeadlessChromeClient implements HttpClient
 
         exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js ' . (string)$request->getUri() . ' 40000 ' . $cookieString . '> ' . $file, $output, $return);
 
-        $responseJson = file_get_contents($file);
+        $responseJson = trim(file_get_contents($file));
         unlink($file);
 
         if (strpos($responseJson, 'TIMEOUT') === 0) {
@@ -29,6 +29,10 @@ class HeadlessChromeClient implements HttpClient
         }
 
         $plainResponse = json_decode($responseJson, true);
+
+        if (!$plainResponse) {
+            throw new \RuntimeException('Error occured: ' . $responseJson);
+        }
 
         if (array_key_exists('type', $plainResponse) and $plainResponse['type'] == 'error') {
             throw new \Exception('Unable to GET ' . (string)$request->getUri() . '. Error message: ' . $plainResponse['message']);
