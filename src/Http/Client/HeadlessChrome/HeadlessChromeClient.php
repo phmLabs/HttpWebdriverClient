@@ -20,7 +20,7 @@ class HeadlessChromeClient implements HttpClient
         /** @var Uri $uri */
         $cookieString = $uri->getCookieString();
 
-        exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js ' . (string)$request->getUri() . ' ' . self::CHROME_TIMEOUT . ' "' . $cookieString . '" "> ' . $file, $output, $return);
+        exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js ' . (string)$request->getUri() . ' ' . self::CHROME_TIMEOUT . ' "' . $cookieString . '" > ' . $file, $output, $return);
 
         $responseJson = trim(file_get_contents($file));
         unlink($file);
@@ -41,7 +41,7 @@ class HeadlessChromeClient implements HttpClient
 
         $requests = $plainResponse['requests'];
 
-        $masterRequest = array_pop($requests);
+        $masterRequest = array_shift($requests);
 
         $resources = array();
 
@@ -60,7 +60,17 @@ class HeadlessChromeClient implements HttpClient
 
     public function sendRequests(array $requests)
     {
-        throw new \RuntimeException('This method is not implemented yet. Please use sendRequest().');
+        $responses = array();
+
+        foreach ($requests as $request) {
+            try {
+                $responses[] = $this->sendRequest($request);
+            } catch (\Exception $e) {
+                echo "Error sending request " . $request->getUri() . '. Message: ' . $e->getMessage() . '.';
+            }
+        }
+
+        return $responses;
     }
 
     public function getClientType()
