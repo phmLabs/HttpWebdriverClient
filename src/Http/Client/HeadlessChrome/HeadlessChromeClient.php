@@ -41,7 +41,7 @@ class HeadlessChromeClient implements HttpClient
 
         $requests = $plainResponse['requests'];
 
-        $masterRequest = array_shift($requests);
+        $masterRequest = array_slice($requests);
 
         $resources = array();
 
@@ -50,7 +50,7 @@ class HeadlessChromeClient implements HttpClient
         }
 
         if (!array_key_exists('http_status', $masterRequest)) {
-            throw new \RuntimeException('Unable to GET ' . (string)$request->getUri() . '. HTTP Status not set');
+            throw new \RuntimeException('Unable to GET ' . (string)$request->getUri() . '. HTTP Status not set.');
         }
 
         $response = new HeadlessChromeResponse($masterRequest['http_status'], $plainResponse['bodyHTML'], $request, $resources, $masterRequest['response_headers'], $request->getUri());
