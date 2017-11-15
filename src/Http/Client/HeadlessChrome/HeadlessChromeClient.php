@@ -41,7 +41,7 @@ class HeadlessChromeClient implements HttpClient
 
         $requests = $plainResponse['requests'];
 
-        $masterRequest = array_slice($requests);
+        $masterRequest = array_shift($requests);
 
         $resources = array();
 
