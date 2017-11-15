@@ -10,6 +10,7 @@ use whm\Html\Uri;
 class HeadlessChromeClient implements HttpClient
 {
     const CLIENT_TYPE = "headless_chrome";
+    const CHROME_TIMEOUT = 31000;
 
     public function sendRequest(RequestInterface $request)
     {
@@ -19,7 +20,7 @@ class HeadlessChromeClient implements HttpClient
         /** @var Uri $uri */
         $cookieString = $uri->getCookieString();
 
-        exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js ' . (string)$request->getUri() . ' 40000 ' . $cookieString . '> ' . $file, $output, $return);
+        exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js ' . (string)$request->getUri() . ' ' . self::CHROME_TIMEOUT . ' "' . $cookieString . '" "> ' . $file, $output, $return);
 
         $responseJson = trim(file_get_contents($file));
         unlink($file);
