@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "koala_analytics_filter",
   "description": "This extension injects js",
-  "version": "1.0",
+  "version": "1.1",
   "background": {
     "scripts": [
       "background.js"
