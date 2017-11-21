@@ -114,7 +114,7 @@ async function collectData(browser, url) {
         };
 
         await page.setViewport(viewport);
-        await page.goto(url, {waitUntil: 'networkidle2', timeout: 30000}).catch(function (err) {
+        await page.goto(url, {waitUntil: 'networkidle2', timeout: pageTimeout}).catch(function (err) {
             exitError(err.message);
         });
         result.bodyHTML = await page.content();
@@ -153,8 +153,10 @@ async function call(url, timeout) {
 const args = process.argv.slice(2);
 
 const url = args[0];
-const timeout = args[1] || "29000";
+const timeout = args[1] || 29000;
 const cookieString = args[2] || "";
+
+const pageTimeout = timeout + 1000;
 
 const urlArray = url.split("/");
 const domain = urlArray[2];
