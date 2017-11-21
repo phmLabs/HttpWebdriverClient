@@ -11,11 +11,11 @@ class HeadlessChromeClient implements HttpClient
 {
     const CLIENT_TYPE = "headless_chrome";
 
-    private $chromeTimeOut;
+    private $chromeTimeout;
 
     public function __construct($chromeTimeOut = 31000)
     {
-        $this->chromeTimeOut = $chromeTimeOut;
+        $this->chromeTimeout = $chromeTimeOut;
     }
 
     public function sendRequest(RequestInterface $request)
@@ -64,7 +64,7 @@ class HeadlessChromeClient implements HttpClient
         /** @var Uri $uri */
         $cookieString = $uri->getCookieString();
 
-        exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js ' . (string)$request->getUri() . ' ' . $this->chromeTimeOut . ' "' . $cookieString . '" > ' . $file, $output, $return);
+        exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js ' . (string)$request->getUri() . ' ' . $this->chromeTimeout . ' "' . $cookieString . '" > ' . $file, $output, $return);
 
         $responseJson = trim(file_get_contents($file));
         unlink($file);
