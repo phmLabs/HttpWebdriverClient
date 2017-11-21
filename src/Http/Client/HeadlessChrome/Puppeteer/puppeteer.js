@@ -156,7 +156,7 @@ const url = args[0];
 const timeout = args[1] || 29000;
 const cookieString = args[2] || "";
 
-const pageTimeout = timeout + 1000;
+const pageTimeout = parseInt(timeout) + 1000;
 
 const urlArray = url.split("/");
 const domain = urlArray[2];
