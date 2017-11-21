@@ -23,21 +23,34 @@ class GuzzleClient implements HttpClient
 
     private $standardHeaders = [];
 
+    private $options = [
+        'verify' => false,
+        'decode_content' => false,
+        'allow_redirects' => [
+            'track_redirects' => true,
+        ]];
+
     public function __construct($standardHeaders = ['Accept-Encoding' => 'gzip', 'Connection' => 'keep-alive'], $timeout = 10)
     {
-        $client = new Client([
-            'headers' => $standardHeaders,
-            'decode_content' => false,
-            'timeout' => $timeout,
-            'verify' => false,
-            'allow_redirects' => [
-                'track_redirects' => true
-            ]
-        ]);
-
+        $this->options = array_merge($this->options, ['headers' => $standardHeaders, 'timeout' => $timeout,]);
         $this->standardHeaders = $standardHeaders;
+    }
 
-        $this->client = $client;
+    public function setOption($key, $value)
+    {
+        $this->options[$key] = $value;
+        unset($this->client);
+    }
+
+    private function getClient()
+    {
+        if (!isset($this->client)) {
+            $this->client = new Client(
+                $this->options
+            );
+        }
+
+        return $this->client;
     }
 
     /**
@@ -47,7 +60,7 @@ class GuzzleClient implements HttpClient
     public function sendRequest(RequestInterface $request)
     {
         $request = $this->handleCookies($request);
-        $response = $this->client->send($this->handleCookies($request));
+        $response = $this->getClient()->send($this->handleCookies($request));
         return new GuzzleResponse($response, $request);
     }
 
@@ -89,7 +102,7 @@ class GuzzleClient implements HttpClient
                 $request->getHeaders()
             );
 
-            $promises[$key] = $this->client->sendAsync($guzzleRequest, $params);
+            $promises[$key] = $this->getClient()->sendAsync($guzzleRequest, $params);
         }
 
         $results = Promise\settle($promises)->wait();
