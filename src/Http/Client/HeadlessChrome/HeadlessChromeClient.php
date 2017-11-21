@@ -20,6 +20,44 @@ class HeadlessChromeClient implements HttpClient
 
     public function sendRequest(RequestInterface $request)
     {
+        $plainResponse = $this->sendHeadlessChromeRequest($request);
+        $requests = $plainResponse['requests'];
+
+        $masterRequest = array_shift($requests);
+
+        $resources = array();
+
+        foreach ($requests as $key => $resource) {
+            $resources[] = ['name' => $key];
+        }
+
+        if (!array_key_exists('http_status', $masterRequest)) {
+            throw new \RuntimeException('Unable to GET ' . (string)$request->getUri() . '. HTTP Status not set.');
+        }
+
+        $response = new HeadlessChromeResponse($masterRequest['http_status'], $plainResponse['bodyHTML'], $request, $resources, $masterRequest['response_headers'], $request->getUri());
+        $response->setJavaScriptErrors($plainResponse['js_errors']);
+        return $response;
+    }
+
+    private function sendHeadlessChromeRequest(RequestInterface $request, $retries = 2)
+    {
+        $exception = null;
+
+        for ($i = 0; $i < $retries; $i++) {
+            try {
+                $response = $this->processHeadlessChromeRequest($request);
+                return $response;
+            } catch (\Exception $e) {
+                $exception = $e;
+            }
+        }
+
+        throw  $exception;
+    }
+
+    private function processHeadlessChromeRequest(RequestInterface $request)
+    {
         $file = sys_get_temp_dir() . md5(microtime()) . '.json';
 
         $uri = $request->getUri();
@@ -45,23 +83,7 @@ class HeadlessChromeClient implements HttpClient
             throw new \Exception('Unable to GET ' . (string)$request->getUri() . '. Error message: ' . $plainResponse['message']);
         }
 
-        $requests = $plainResponse['requests'];
-
-        $masterRequest = array_shift($requests);
-
-        $resources = array();
-
-        foreach ($requests as $key => $resource) {
-            $resources[] = ['name' => $key];
-        }
-
-        if (!array_key_exists('http_status', $masterRequest)) {
-            throw new \RuntimeException('Unable to GET ' . (string)$request->getUri() . '. HTTP Status not set.');
-        }
-
-        $response = new HeadlessChromeResponse($masterRequest['http_status'], $plainResponse['bodyHTML'], $request, $resources, $masterRequest['response_headers'], $request->getUri());
-        $response->setJavaScriptErrors($plainResponse['js_errors']);
-        return $response;
+        return $plainResponse;
     }
 
     public function sendRequests(array $requests)
@@ -84,6 +106,11 @@ class HeadlessChromeClient implements HttpClient
         return self::CLIENT_TYPE;
     }
 
+    /**
+     * This function closes the browser connection.
+     *
+     * It is not needed for headless chrome but the interface forces it.
+     */
     public function close()
     {
     }
