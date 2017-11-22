@@ -50,11 +50,10 @@ async function collectData(browser, url) {
             result.request_total++;
 
             // filter special urls like google analytics collect
+            result.requests[request.url].abort = false;
             filteredUrls.forEach(regex => {
                 if (request.url.match(new RegExp(regex))) {
                     result.requests[request.url].abort = true;
-                } else {
-                    result.requests[request.url].abort = false;
                 }
             });
 
@@ -92,7 +91,7 @@ async function collectData(browser, url) {
                     result.requests[response.url].size = buffer.length;
                     result.pageSize += buffer.length;
                 }).catch(function (error) {
-                    console.log(error);
+                    // console.log(error);
                 });
             }
         });
@@ -135,7 +134,7 @@ async function call(url, timeout) {
 
     try {
         (async () => {
-            browser = await puppeteer.launch({'headless': false, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
+            browser = await puppeteer.launch({'headless': true, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
             await collectData(browser, url);
             await browser.close();
             exitSuccess(result);
@@ -166,7 +165,7 @@ const domain = urlArray[2];
 
 const filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
 
-var result = {};
+let result = {};
 result.url = url;
 result.pageSize = 0;
 result.request_total = 0;
