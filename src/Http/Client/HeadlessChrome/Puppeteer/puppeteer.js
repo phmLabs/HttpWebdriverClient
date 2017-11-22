@@ -32,6 +32,8 @@ async function collectData(browser, url) {
         const page = await browser.newPage();
         await page.setRequestInterception(true);
 
+        let firstResponse = true;
+
         page.on("error", async function (err) {
             exitError(err.msg);
         });
@@ -77,6 +79,19 @@ async function collectData(browser, url) {
         });
 
         page.on('response', response => {
+
+            // store the response content in case a timeout occurs
+            if (firstResponse) {
+                if (parseInt(response.status) != 301) {
+                    firstResponse = false;
+                    response.buffer().then(buffer => {
+                        result.bodyHTML += buffer.toString('ascii');
+                    }).catch(function (error) {
+                        // console.error(error);
+                    });
+                }
+            }
+
             result.requests[response.url].time_tfb = new Date().valueOf();
             result.requests[response.url].http_status = response.status;
             result.requests[response.url].type = response.request().resourceType;
@@ -120,6 +135,7 @@ async function collectData(browser, url) {
         await page.goto(url, {'timeout': pageTimeout}).catch(function (err) {
             exitError(err.message);
         });
+
         result.bodyHTML = await page.content();
         resolve(result);
     })
