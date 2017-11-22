@@ -14,19 +14,23 @@ function exitError(msg) {
     process.exit(0);
 }
 
+function exitSuccess(result) {
+    result.status = "success";
+    console.log(JSON.stringify(result, null, 2));
+    //  process.exit(0);
+}
+
+
+function exitTimeout(result) {
+    result.status = "timeout";
+    console.log(JSON.stringify(result, null, 2));
+    process.exit(0);
+}
+
 async function collectData(browser, url) {
     return new Promise(async (resolve, reject) => {
         const page = await browser.newPage();
         await page.setRequestInterception(true);
-
-        let result = {};
-        result.url = url;
-        result.pageSize = 0;
-        result.request_total = 0;
-        result.request_success = 0;
-        result.request_failed = 0;
-        result.requests = {};
-        result.js_errors = [];
 
         page.on("error", async function (err) {
             exitError(err.msg);
@@ -34,7 +38,6 @@ async function collectData(browser, url) {
 
         page.on("pageerror", async function (err) {
             result.js_errors.push(err.message);
-            return;
         });
 
         page.on('request', request => {
@@ -50,6 +53,8 @@ async function collectData(browser, url) {
             filteredUrls.forEach(regex => {
                 if (request.url.match(new RegExp(regex))) {
                     result.requests[request.url].abort = true;
+                } else {
+                    result.requests[request.url].abort = false;
                 }
             });
 
@@ -59,7 +64,6 @@ async function collectData(browser, url) {
                 headers['cookie'] = cookieString;
             }
             result.requests[request.url].request_headers = request.headers;
-
 
             result.requests[request.url].method = request.method;
             if (request.method === 'POST') {
@@ -114,7 +118,7 @@ async function collectData(browser, url) {
         };
 
         await page.setViewport(viewport);
-        await page.goto(url, {waitUntil: 'networkidle2', timeout: pageTimeout}).catch(function (err) {
+        await page.goto(url, {'timeout': pageTimeout}).catch(function (err) {
             exitError(err.message);
         });
         result.bodyHTML = await page.content();
@@ -126,16 +130,15 @@ async function call(url, timeout) {
     let browser;
 
     setTimeout(function () {
-        exitError('Timeout after ' + timeout + ' ms.');
+        exitTimeout(result);
     }, timeout);
 
     try {
         (async () => {
-            browser = await puppeteer.launch({'headless': true, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
-            let result = await collectData(browser, url);
-
-            console.log(JSON.stringify(result, null, 2));
+            browser = await puppeteer.launch({'headless': false, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
+            await collectData(browser, url);
             await browser.close();
+            exitSuccess(result);
             process.exit(0);
         })();
     }
@@ -156,11 +159,20 @@ const url = args[0];
 const timeout = args[1] || 29000;
 const cookieString = args[2] || "";
 
-const pageTimeout = parseInt(timeout) + 1000;
+const pageTimeout = parseInt(timeout) + 5000;
 
 const urlArray = url.split("/");
 const domain = urlArray[2];
 
 const filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
+
+var result = {};
+result.url = url;
+result.pageSize = 0;
+result.request_total = 0;
+result.request_success = 0;
+result.request_failed = 0;
+result.requests = {};
+result.js_errors = [];
 
 call(url, timeout, cookieString);
