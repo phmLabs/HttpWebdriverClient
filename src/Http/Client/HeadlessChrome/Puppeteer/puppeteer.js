@@ -39,7 +39,9 @@ async function collectData(browser, url) {
         });
 
         page.on("pageerror", async function (err) {
+            if(result.js_errors.indexOf(err.message) === -1) {
             result.js_errors.push(err.message);
+            }
         });
 
         page.on('request', request => {
@@ -82,7 +84,7 @@ async function collectData(browser, url) {
 
             // store the response content in case a timeout occurs
             if (firstResponse) {
-                if (parseInt(response.status) != 301) {
+                if (parseInt(response.status) !== 301) {
                     firstResponse = false;
                     response.buffer().then(buffer => {
                         result.bodyHTML += buffer.toString('ascii');
