@@ -86,6 +86,11 @@ async function collectData(browser, url) {
             if (firstResponse) {
                 if (parseInt(response.status) !== 301 && parseInt(response.status) !== 302) {
                     firstResponse = false;
+
+                    if (response.headers['content-type']) {
+                        result.contentType = response.headers['content-type'];
+                    }
+
                     response.buffer().then(buffer => {
                         result.bodyHTML += buffer.toString('ascii');
                     }).catch(function (error) {
@@ -138,7 +143,9 @@ async function collectData(browser, url) {
             exitError(err.message);
         });
 
-        result.bodyHTML = await page.content();
+        if (result.contentType.indexOf('xml') === -1) {
+            result.bodyHTML = await page.content();
+        }
         resolve(result);
     })
 }
@@ -191,5 +198,7 @@ result.request_success = 0;
 result.request_failed = 0;
 result.requests = {};
 result.js_errors = [];
+result.bodyHTML = '';
+result.contentType = '';
 
 call(url, timeout, cookieString);
