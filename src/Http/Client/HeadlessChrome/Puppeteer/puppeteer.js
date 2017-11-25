@@ -143,6 +143,8 @@ async function collectData(browser, url) {
             exitError(err.message);
         });
 
+        await page.waitFor(3000);
+
         if (result.contentType.indexOf('xml') === -1) {
             result.bodyHTML = await page.content();
         }
