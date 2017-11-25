@@ -130,8 +130,8 @@ async function collectData(browser, url) {
         });
 
         const viewport = {
-            "width": 2514,
-            "height": 1343,
+            "width": 1680,
+            "height": 953,
             "scale": 1,
             "isMobile": false,
             "hasTouch": false,
@@ -143,7 +143,7 @@ async function collectData(browser, url) {
             exitError(err.message);
         });
 
-        await page.waitFor(3000);
+        await page.waitFor(parseInt(timeout * 0.1));
 
         if (result.contentType.indexOf('xml') === -1) {
             result.bodyHTML = await page.content();
@@ -183,7 +183,7 @@ async function call(url, timeout) {
 const args = process.argv.slice(2);
 
 const url = args[0];
-const timeout = args[1] || 29000;
+const timeout = parseInt(args[1] || 29000);
 const cookieString = args[2] || "";
 
 const pageTimeout = parseInt(timeout) + 5000;
