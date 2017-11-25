@@ -31,10 +31,6 @@ class HeadlessChromeClient implements HttpClient
             $resources[] = ['name' => $key];
         }
 
-        if (!array_key_exists('http_status', $masterRequest)) {
-            throw new \RuntimeException('Unable to GET ' . (string)$request->getUri() . '. HTTP Status not set.');
-        }
-
         $response = new HeadlessChromeResponse($masterRequest['http_status'], $plainResponse['bodyHTML'], $request, $resources, $masterRequest['response_headers'], $request->getUri());
         $response->setJavaScriptErrors($plainResponse['js_errors']);
 
@@ -79,6 +75,7 @@ class HeadlessChromeClient implements HttpClient
         }
 
         $plainResponse = json_decode($responseJson, true);
+        $requests = $plainResponse['requests'];
 
         if (!$plainResponse) {
             throw new \RuntimeException('Error occured: ' . $responseJson);
@@ -86,6 +83,11 @@ class HeadlessChromeClient implements HttpClient
 
         if (array_key_exists('type', $plainResponse) and $plainResponse['type'] == 'error') {
             throw new \Exception('Unable to GET ' . (string)$request->getUri() . '. Error message: ' . $plainResponse['message']);
+        }
+
+        $masterRequest = array_shift($requests);
+        if (!array_key_exists('http_status', $masterRequest)) {
+            throw new \RuntimeException('Unable to GET ' . (string)$request->getUri() . '. HTTP Status Code not set.');
         }
 
         return $plainResponse;
