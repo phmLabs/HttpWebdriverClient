@@ -139,13 +139,14 @@ async function collectData(browser, url) {
         };
 
         await page.setViewport(viewport);
-        await page.goto(url, {'timeout': pageTimeout}).catch(function (err) {
+        await page.goto(url, {'timeout': pageTimeout, 'waitUntil': 'networkidle2'}).catch(function (err) {
             exitError(err.message);
         });
 
         if (result.contentType.indexOf('xml') === -1) {
             result.bodyHTML = await page.content();
         }
+
         resolve(result);
     })
 }
