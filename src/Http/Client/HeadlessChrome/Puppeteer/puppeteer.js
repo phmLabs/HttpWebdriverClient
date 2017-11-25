@@ -139,7 +139,7 @@ async function collectData(browser, url) {
         };
 
         await page.setViewport(viewport);
-        await page.goto(url, {'timeout': pageTimeout, 'waitUntil': 'networkidle2'}).catch(function (err) {
+        await page.goto(url, {'timeout': pageTimeout, 'waitUntil': 'networkidle0'}).catch(function (err) {
             exitError(err.message);
         });
 
