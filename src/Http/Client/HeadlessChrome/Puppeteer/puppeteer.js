@@ -92,7 +92,7 @@ async function collectData(browser, url) {
                     }
 
                     response.buffer().then(buffer => {
-                        result.bodyHTML += buffer.toString('ascii');
+                        result.bodyHTML += buffer.toString('utf-8');
                     }).catch(function (error) {
                         // console.error(error);
                     });
