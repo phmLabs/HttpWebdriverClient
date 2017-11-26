@@ -7,7 +7,7 @@ use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 
-class FileCacheDecorator extends CacheDecorator
+class FileCacheDecorator extends CacheDecorator implements ClientDecorator
 {
     const CACHE_DIRECTORY_DEFAULT = '/tmp/cache/http/';
 

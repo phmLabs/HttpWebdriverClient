@@ -16,6 +16,8 @@ class CacheDecorator implements HttpClient
 
     private $expiresAfter;
 
+    private $active = true;
+
     public function __construct(HttpClient $client, CacheItemPoolInterface $cacheItemPool, $expiresAfter = null)
     {
         if (!$expiresAfter) {
@@ -29,42 +31,50 @@ class CacheDecorator implements HttpClient
 
     public function sendRequest(RequestInterface $request)
     {
-        $key = $this->getHash($request);
+        if ($this->active) {
+            $key = $this->getHash($request);
 
-        if ($this->cacheItemPool->hasItem($key)) {
-            $serializedResponse = $this->cacheItemPool->getItem($key)->get();
-            return $this->unserializeResponse($serializedResponse);
+            if ($this->cacheItemPool->hasItem($key)) {
+                $serializedResponse = $this->cacheItemPool->getItem($key)->get();
+                return $this->unserializeResponse($serializedResponse);
+            } else {
+                $response = $this->client->sendRequest($request);
+                $this->cacheResponse($key, $response);
+                return $response;
+            }
         } else {
-            $response = $this->client->sendRequest($request);
-            $this->cacheResponse($key, $response);
-            return $response;
+            return $this->client->sendRequest($request);
         }
     }
 
     public function sendRequests(array $requests)
     {
-        $responses = array();
+        if ($this->active) {
+            $responses = array();
 
-        foreach ($requests as $id => $request) {
-            $key = $this->getHash($request);
-            if ($this->cacheItemPool->hasItem($key)) {
-                $responses[] = $this->unserializeResponse($this->cacheItemPool->getItem($key)->get());
-                unset($requests[$id]);
+            foreach ($requests as $id => $request) {
+                $key = $this->getHash($request);
+                if ($this->cacheItemPool->hasItem($key)) {
+                    $responses[] = $this->unserializeResponse($this->cacheItemPool->getItem($key)->get());
+                    unset($requests[$id]);
+                }
             }
-        }
 
-        if (count($requests) > 0) {
-            $newResponses = $this->client->sendRequests($requests);
+            if (count($requests) > 0) {
+                $newResponses = $this->client->sendRequests($requests);
 
-            foreach ($newResponses as $newResponse) {
-                /** @var Response $newResponse */
-                $key = $this->getHash($newResponse->getRequest());
-                $this->cacheResponse($key, $newResponse);
+                foreach ($newResponses as $newResponse) {
+                    /** @var Response $newResponse */
+                    $key = $this->getHash($newResponse->getRequest());
+                    $this->cacheResponse($key, $newResponse);
+                }
+                $responses = array_merge($responses, $newResponses);
             }
-            $responses = array_merge($responses, $newResponses);
-        }
 
-        return $responses;
+            return $responses;
+        } else {
+            return $this->client->sendRequests($requests);
+        }
     }
 
     public function close()
@@ -113,5 +123,19 @@ class CacheDecorator implements HttpClient
     public function getClientType()
     {
         return $this->client->getClientType();
+    }
+
+    public function getClient()
+    {
+        if ($this->client instanceof ClientDecorator) {
+            return $this->client->getClient();
+        } else {
+            return $this->client;
+        }
+    }
+
+    public function deactivateCache()
+    {
+        $this->active = false;
     }
 }
