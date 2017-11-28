@@ -129,6 +129,18 @@ async function collectData(browser, url) {
             result.request_failed++;
         });
 
+        // see https://github.com/GoogleChrome/puppeteer/issues/1274
+        /*page._client.on('Network.dataReceived', async event => {
+            const request = await page._networkManager._requestIdToRequest.get(event.requestId);
+            if (request) {
+                url = request.url;
+                if (!result.requests[url]) {
+                    result.requests[url] = {};
+                }
+                result.requests[url].size_raw += parseInt(event.dataLength);
+            }
+        });*/
+
         const viewport = {
             "width": 1680,
             "height": 953,
@@ -146,8 +158,14 @@ async function collectData(browser, url) {
         await page.waitFor(parseInt(timeout * 0.1));
 
         if (result.contentType.indexOf('xml') === -1) {
+
             result.bodyHTML = await page.content();
         }
+
+        let screenshotFile = '/tmp/' + Math.round(Math.random()*1000000000) + '.png';
+        await page.screenshot({path: screenshotFile});
+
+        result.screenshot = screenshotFile;
 
         resolve(result);
     })
@@ -203,5 +221,6 @@ result.requests = {};
 result.js_errors = [];
 result.bodyHTML = '';
 result.contentType = '';
+result.screenshot = '';
 
 call(url, timeout, cookieString);
