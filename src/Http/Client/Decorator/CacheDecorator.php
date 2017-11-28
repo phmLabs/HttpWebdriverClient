@@ -5,6 +5,7 @@ namespace phm\HttpWebdriverClient\Http\Client\Decorator;
 use Cache\Adapter\Common\CacheItem;
 use phm\HttpWebdriverClient\Http\Client\Guzzle\Response;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
+use phm\HttpWebdriverClient\Http\Response\TimeoutAwareResponse;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -18,6 +19,8 @@ class CacheDecorator implements HttpClient
 
     private $active = true;
 
+    private $cacheOnTimeout = false;
+
     public function __construct(HttpClient $client, CacheItemPoolInterface $cacheItemPool, $expiresAfter = null)
     {
         if (!$expiresAfter) {
@@ -26,28 +29,32 @@ class CacheDecorator implements HttpClient
             $this->expiresAfter = $expiresAfter;
         }
         $this->cacheItemPool = $cacheItemPool;
+
         $this->client = $client;
     }
 
-    public function sendRequest(RequestInterface $request)
+    public function sendRequest(RequestInterface $request, $forceRefresh = false)
     {
         if ($this->active) {
             $key = $this->getHash($request);
 
-            if ($this->cacheItemPool->hasItem($key)) {
-                $serializedResponse = $this->cacheItemPool->getItem($key)->get();
-                return $this->unserializeResponse($serializedResponse);
-            } else {
+            if (!$this->cacheItemPool->hasItem($key) || $forceRefresh) {
                 $response = $this->client->sendRequest($request);
-                $this->cacheResponse($key, $response);
-                return $response;
+                if (!$response->isTimeout() || $this->cacheOnTimeout) {
+                    $this->cacheResponse($key, $response);
+                }
+            } else {
+                $serializedResponse = $this->cacheItemPool->getItem($key)->get();
+                $response = $this->unserializeResponse($serializedResponse);
             }
+            return $response;
+
         } else {
             return $this->client->sendRequest($request);
         }
     }
 
-    public function sendRequests(array $requests)
+    public function sendRequests(array $requests, $forceRefresh = false)
     {
         if ($this->active) {
             $responses = array();
@@ -75,6 +82,14 @@ class CacheDecorator implements HttpClient
         } else {
             return $this->client->sendRequests($requests);
         }
+    }
+
+    /**
+     * @param  boolean $cacheOnTimeOut
+     */
+    public function setCacheOnTimeout($cacheOnTimeOut)
+    {
+        $this->cacheOnTimeout = $cacheOnTimeOut;
     }
 
     public function close()

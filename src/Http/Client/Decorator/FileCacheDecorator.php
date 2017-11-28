@@ -18,7 +18,7 @@ class FileCacheDecorator extends CacheDecorator implements ClientDecorator
         }
 
         if (!$expiresAfter) {
-            $expiresAfter = new \DateInterval('PT55M');
+            $expiresAfter = new \DateInterval('PT45M');
         }
 
         $filesystemAdapter = new Local($cacheDirectory);
