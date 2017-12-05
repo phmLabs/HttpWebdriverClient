@@ -34,9 +34,18 @@ class HeadlessChromeClient implements HttpClient
         $response = new HeadlessChromeResponse($masterRequest['http_status'], $plainResponse['bodyHTML'], $request, $resources, $masterRequest['response_headers'], $request->getUri());
         $response->setJavaScriptErrors($plainResponse['js_errors']);
 
+        if ($plainResponse['screenshot']) {
+            $response->setScreenshot($plainResponse['screenshot']);
+        }
+
         if ($plainResponse['status'] == 'timeout') {
             $response->setIsTimeout();
         }
+
+        $startTime = $masterRequest["time_start"];
+        $stopTime = $masterRequest["time_finished"];
+        $duration = $stopTime - $startTime;
+        $response->setDuration($duration);
 
         return $response;
     }

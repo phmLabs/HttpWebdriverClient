@@ -164,8 +164,7 @@ async function collectData(browser, url) {
 
         // let screenshotFile = '/tmp/' + Math.round(Math.random()*1000000000) + '.png';
         // await page.screenshot({path: screenshotFile});
-
-        result.screenshot = screenshotFile;
+        // result.screenshot = screenshotFile;
 
         resolve(result);
     })
