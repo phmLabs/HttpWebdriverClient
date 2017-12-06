@@ -40,7 +40,7 @@ class CacheDecorator implements HttpClient
 
             if (!$this->cacheItemPool->hasItem($key) || $forceRefresh) {
                 $response = $this->client->sendRequest($request);
-                if (!$response->isTimeout() || $this->cacheOnTimeout) {
+                if (!$response instanceof TimeoutAwareResponse || !$response->isTimeout() || $this->cacheOnTimeout) {
                     $this->cacheResponse($key, $response);
                 }
             } else {
