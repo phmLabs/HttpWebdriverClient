@@ -31,7 +31,9 @@ class HeadlessChromeClient implements HttpClient
             $resources[] = ['name' => $key];
         }
 
-        $response = new HeadlessChromeResponse($masterRequest['http_status'], $plainResponse['bodyHTML'], $request, $resources, $masterRequest['response_headers'], $request->getUri());
+        $content = $this->repairContent($plainResponse['bodyHTML']);
+
+        $response = new HeadlessChromeResponse($masterRequest['http_status'], $content, $request, $resources, $masterRequest['response_headers'], $request->getUri());
         $response->setJavaScriptErrors($plainResponse['js_errors']);
 
         if ($plainResponse['status'] == 'timeout') {
@@ -39,6 +41,12 @@ class HeadlessChromeClient implements HttpClient
         }
 
         return $response;
+    }
+
+    private function repairContent($content)
+    {
+        $content = str_replace('<iframe style="position: absolute; top: -10000px; left: -1000px;"></iframe>', '', $content);
+        return $content;
     }
 
     private function sendHeadlessChromeRequest(RequestInterface $request, $retries = 2)
