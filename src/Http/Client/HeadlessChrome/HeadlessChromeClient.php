@@ -47,6 +47,8 @@ class HeadlessChromeClient implements HttpClient
         $duration = $stopTime - $startTime;
         $response->setDuration($duration);
 
+        $response->setCookies($plainResponse['cookies']);
+
         return $response;
     }
 

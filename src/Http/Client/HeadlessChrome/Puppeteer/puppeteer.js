@@ -3,6 +3,7 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 const path = require("path");
+const {URL} = require('url');
 
 const filterFile = path.resolve(__dirname, 'filter.yml');
 
@@ -34,10 +35,16 @@ async function collectData(browser, url) {
 
         let firstResponse = true;
 
+        /**
+         * Exit on error
+         */
         page.on("error", async function (err) {
             exitError(err.msg);
         });
 
+        /**
+         * Log all page errors to result file
+         */
         page.on("pageerror", async function (err) {
             if (result.js_errors.indexOf(err.message) === -1) {
                 result.js_errors.push(err.message);
@@ -128,6 +135,27 @@ async function collectData(browser, url) {
             result.requests[request.url].success = false;
             result.request_failed++;
         });
+
+        page.on('load', async () => {
+            result.timing.load = new Date().valueOf();
+
+            // store cookies from all frames
+            let frames = page.frames();
+            frames.forEach(async frame => {
+                let url = frame.url();
+                let cookies = await page.cookies(url);
+
+                let uri = new URL(url);
+                if (uri.hostname) {
+                    let domain = uri.protocol + '//' + uri.hostname;
+                    result.cookies[domain] = [];
+                    cookies.forEach(cookie => {
+                        result.cookies[domain].push(cookie);
+                    });
+                }
+            });
+        });
+
 
         // see https://github.com/GoogleChrome/puppeteer/issues/1274
         /*page._client.on('Network.dataReceived', async event => {
@@ -220,5 +248,7 @@ result.js_errors = [];
 result.bodyHTML = '';
 result.contentType = '';
 result.screenshot = '';
+result.timing = {};
+result.cookies = {};
 
 call(url, timeout, cookieString);
