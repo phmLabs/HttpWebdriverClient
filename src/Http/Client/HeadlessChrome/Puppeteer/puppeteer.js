@@ -157,8 +157,7 @@ async function collectData(browser, url) {
 
         await page.waitFor(parseInt(timeout * 0.1));
 
-        if (result.contentType.indexOf('xml') === -1) {
-
+        if (result.contentType.indexOf('xml') === -1 && result.contentType.indexOf('json') === -1) {
             result.bodyHTML = await page.content();
         }
 
