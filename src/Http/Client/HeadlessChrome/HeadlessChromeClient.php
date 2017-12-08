@@ -36,9 +36,20 @@ class HeadlessChromeClient implements HttpClient
         $response = new HeadlessChromeResponse($masterRequest['http_status'], $content, $request, $resources, $masterRequest['response_headers'], $request->getUri());
         $response->setJavaScriptErrors($plainResponse['js_errors']);
 
+        if ($plainResponse['screenshot']) {
+            $response->setScreenshot($plainResponse['screenshot']);
+        }
+
         if ($plainResponse['status'] == 'timeout') {
             $response->setIsTimeout();
         }
+
+        $startTime = $masterRequest["time_start"];
+        $stopTime = $masterRequest["time_finished"];
+        $duration = $stopTime - $startTime;
+        $response->setDuration($duration);
+
+        $response->setCookies($plainResponse['cookies']);
 
         return $response;
     }
@@ -73,7 +84,8 @@ class HeadlessChromeClient implements HttpClient
         /** @var Uri $uri */
         $cookieString = $uri->getCookieString();
 
-        exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js ' . (string)$request->getUri() . ' ' . $this->chromeTimeout . ' "' . $cookieString . '" > ' . $file, $output, $return);
+        $command = 'node ' . __DIR__ . '/Puppeteer/puppeteer.js "' . (string)$request->getUri() . '" ' . $this->chromeTimeout . ' "' . $cookieString . '" > ' . $file;
+        exec($command, $output, $return);
 
         $responseJson = trim(file_get_contents($file));
         unlink($file);
