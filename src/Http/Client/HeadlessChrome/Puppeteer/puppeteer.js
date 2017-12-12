@@ -34,6 +34,7 @@ async function collectData(browser, url) {
         await page.setRequestInterception(true);
 
         let firstResponse = true;
+        let firstNetwork = true;
 
         /**
          * Exit on error
@@ -158,16 +159,13 @@ async function collectData(browser, url) {
 
 
         // see https://github.com/GoogleChrome/puppeteer/issues/1274
-        /*page._client.on('Network.dataReceived', async event => {
+        page._client.on('Network.dataReceived', async event => {
             const request = await page._networkManager._requestIdToRequest.get(event.requestId);
-            if (request) {
-                url = request.url;
-                if (!result.requests[url]) {
-                    result.requests[url] = {};
-                }
-                result.requests[url].size_raw += parseInt(event.dataLength);
+            if (firstNetwork) {
+                firstNetwork = false;
+                result.timing.data_received = new Date().valueOf();
             }
-        });*/
+        });
 
         const viewport = {
             "width": 1680,
@@ -179,6 +177,9 @@ async function collectData(browser, url) {
         };
 
         await page.setViewport(viewport);
+
+        result.timing.start = new Date().valueOf();
+
         await page.goto(url, {'timeout': pageTimeout, 'waitUntil': 'load'}).catch(function (err) {
             exitError(err.message);
         });
@@ -248,7 +249,7 @@ result.js_errors = [];
 result.bodyHTML = '';
 result.contentType = '';
 result.screenshot = '';
-result.timing = {};
 result.cookies = {};
+result.timing = {};
 
 call(url, timeout, cookieString);
