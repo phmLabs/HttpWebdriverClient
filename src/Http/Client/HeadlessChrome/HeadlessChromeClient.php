@@ -114,4 +114,8 @@ class HeadlessChromeClient implements HttpClient
     public function close()
     {
     }
+
+    public function setOption($key, $value)
+    {
+    }
 }

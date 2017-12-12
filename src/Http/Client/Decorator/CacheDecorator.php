@@ -114,4 +114,9 @@ class CacheDecorator implements HttpClient
     {
         return $this->client->getClientType();
     }
+
+    public function setOption($key, $value)
+    {
+        return $this->client->setOption($key, $value);
+    }
 }
