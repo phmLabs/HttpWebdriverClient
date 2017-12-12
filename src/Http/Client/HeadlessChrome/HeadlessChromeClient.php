@@ -11,11 +11,11 @@ class HeadlessChromeClient implements HttpClient
 {
     const CLIENT_TYPE = "headless_chrome";
 
-    private $chromeTimeOut;
+    private $chromeTimeout;
 
     public function __construct($chromeTimeOut = 31000)
     {
-        $this->chromeTimeOut = $chromeTimeOut;
+        $this->chromeTimeout = $chromeTimeOut;
     }
 
     public function sendRequest(RequestInterface $request)
@@ -31,13 +31,33 @@ class HeadlessChromeClient implements HttpClient
             $resources[] = ['name' => $key];
         }
 
-        if (!array_key_exists('http_status', $masterRequest)) {
-            throw new \RuntimeException('Unable to GET ' . (string)$request->getUri() . '. HTTP Status not set.');
+        $content = $this->repairContent($plainResponse['bodyHTML']);
+
+        $response = new HeadlessChromeResponse($masterRequest['http_status'], $content, $request, $resources, $masterRequest['response_headers'], $request->getUri());
+        $response->setJavaScriptErrors($plainResponse['js_errors']);
+
+        if ($plainResponse['screenshot']) {
+            $response->setScreenshot($plainResponse['screenshot']);
         }
 
-        $response = new HeadlessChromeResponse($masterRequest['http_status'], $plainResponse['bodyHTML'], $request, $resources, $masterRequest['response_headers'], $request->getUri());
-        $response->setJavaScriptErrors($plainResponse['js_errors']);
+        if ($plainResponse['status'] == 'timeout') {
+            $response->setIsTimeout();
+        }
+
+        $startTime = $masterRequest["time_start"];
+        $stopTime = $masterRequest["time_finished"];
+        $duration = $stopTime - $startTime;
+        $response->setDuration($duration);
+
+        $response->setCookies($plainResponse['cookies']);
+
         return $response;
+    }
+
+    private function repairContent($content)
+    {
+        $content = str_replace('<iframe style="position: absolute; top: -10000px; left: -1000px;"></iframe>', '', $content);
+        return $content;
     }
 
     private function sendHeadlessChromeRequest(RequestInterface $request, $retries = 2)
@@ -64,7 +84,8 @@ class HeadlessChromeClient implements HttpClient
         /** @var Uri $uri */
         $cookieString = $uri->getCookieString();
 
-        exec('node ' . __DIR__ . '/Puppeteer/puppeteer.js ' . (string)$request->getUri() . ' ' . $this->chromeTimeOut . ' "' . $cookieString . '" > ' . $file, $output, $return);
+        $command = 'node ' . __DIR__ . '/Puppeteer/puppeteer.js "' . (string)$request->getUri() . '" ' . $this->chromeTimeout . ' "' . $cookieString . '" > ' . $file;
+        exec($command, $output, $return);
 
         $responseJson = trim(file_get_contents($file));
         unlink($file);
@@ -74,6 +95,7 @@ class HeadlessChromeClient implements HttpClient
         }
 
         $plainResponse = json_decode($responseJson, true);
+        $requests = $plainResponse['requests'];
 
         if (!$plainResponse) {
             throw new \RuntimeException('Error occured: ' . $responseJson);
@@ -81,6 +103,11 @@ class HeadlessChromeClient implements HttpClient
 
         if (array_key_exists('type', $plainResponse) and $plainResponse['type'] == 'error') {
             throw new \Exception('Unable to GET ' . (string)$request->getUri() . '. Error message: ' . $plainResponse['message']);
+        }
+
+        $masterRequest = array_shift($requests);
+        if (!array_key_exists('http_status', $masterRequest)) {
+            throw new \RuntimeException('Unable to GET ' . (string)$request->getUri() . '. HTTP Status Code not set.');
         }
 
         return $plainResponse;

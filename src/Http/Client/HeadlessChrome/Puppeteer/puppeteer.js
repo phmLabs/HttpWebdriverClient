@@ -3,6 +3,7 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 const path = require("path");
+const {URL} = require('url');
 
 const filterFile = path.resolve(__dirname, 'filter.yml');
 
@@ -14,27 +15,40 @@ function exitError(msg) {
     process.exit(0);
 }
 
+function exitSuccess(result) {
+    result.status = "success";
+    console.log(JSON.stringify(result, null, 2));
+    //  process.exit(0);
+}
+
+
+function exitTimeout(result) {
+    result.status = "timeout";
+    console.log(JSON.stringify(result, null, 2));
+    process.exit(0);
+}
+
 async function collectData(browser, url) {
     return new Promise(async (resolve, reject) => {
         const page = await browser.newPage();
         await page.setRequestInterception(true);
 
-        let result = {};
-        result.url = url;
-        result.pageSize = 0;
-        result.request_total = 0;
-        result.request_success = 0;
-        result.request_failed = 0;
-        result.requests = {};
-        result.js_errors = [];
+        let firstResponse = true;
 
+        /**
+         * Exit on error
+         */
         page.on("error", async function (err) {
             exitError(err.msg);
         });
 
+        /**
+         * Log all page errors to result file
+         */
         page.on("pageerror", async function (err) {
-            result.js_errors.push(err.message);
-            return;
+            if (result.js_errors.indexOf(err.message) === -1) {
+                result.js_errors.push(err.message);
+            }
         });
 
         page.on('request', request => {
@@ -47,6 +61,7 @@ async function collectData(browser, url) {
             result.request_total++;
 
             // filter special urls like google analytics collect
+            result.requests[request.url].abort = false;
             filteredUrls.forEach(regex => {
                 if (request.url.match(new RegExp(regex))) {
                     result.requests[request.url].abort = true;
@@ -59,7 +74,6 @@ async function collectData(browser, url) {
                 headers['cookie'] = cookieString;
             }
             result.requests[request.url].request_headers = request.headers;
-
 
             result.requests[request.url].method = request.method;
             if (request.method === 'POST') {
@@ -74,6 +88,24 @@ async function collectData(browser, url) {
         });
 
         page.on('response', response => {
+
+            // store the response content in case a timeout occurs
+            if (firstResponse) {
+                if (parseInt(response.status) !== 301 && parseInt(response.status) !== 302) {
+                    firstResponse = false;
+
+                    if (response.headers['content-type']) {
+                        result.contentType = response.headers['content-type'];
+                    }
+
+                    response.buffer().then(buffer => {
+                        result.bodyHTML += buffer.toString('utf-8');
+                    }).catch(function (error) {
+                        // console.error(error);
+                    });
+                }
+            }
+
             result.requests[response.url].time_tfb = new Date().valueOf();
             result.requests[response.url].http_status = response.status;
             result.requests[response.url].type = response.request().resourceType;
@@ -88,7 +120,7 @@ async function collectData(browser, url) {
                     result.requests[response.url].size = buffer.length;
                     result.pageSize += buffer.length;
                 }).catch(function (error) {
-                    console.log(error);
+                    // console.log(error);
                 });
             }
         });
@@ -104,9 +136,42 @@ async function collectData(browser, url) {
             result.request_failed++;
         });
 
+        page.on('load', async () => {
+            result.timing.load = new Date().valueOf();
+
+            // store cookies from all frames
+            let frames = page.frames();
+            frames.forEach(async frame => {
+                let url = frame.url();
+                let cookies = await page.cookies(url);
+
+                let uri = new URL(url);
+                if (uri.hostname) {
+                    let domain = uri.protocol + '//' + uri.hostname;
+                    result.cookies[domain] = [];
+                    cookies.forEach(cookie => {
+                        result.cookies[domain].push(cookie);
+                    });
+                }
+            });
+        });
+
+
+        // see https://github.com/GoogleChrome/puppeteer/issues/1274
+        /*page._client.on('Network.dataReceived', async event => {
+            const request = await page._networkManager._requestIdToRequest.get(event.requestId);
+            if (request) {
+                url = request.url;
+                if (!result.requests[url]) {
+                    result.requests[url] = {};
+                }
+                result.requests[url].size_raw += parseInt(event.dataLength);
+            }
+        });*/
+
         const viewport = {
-            "width": 2514,
-            "height": 1343,
+            "width": 1680,
+            "height": 953,
             "scale": 1,
             "isMobile": false,
             "hasTouch": false,
@@ -114,10 +179,20 @@ async function collectData(browser, url) {
         };
 
         await page.setViewport(viewport);
-        await page.goto(url, {waitUntil: 'networkidle2', timeout: pageTimeout}).catch(function (err) {
+        await page.goto(url, {'timeout': pageTimeout, 'waitUntil': 'load'}).catch(function (err) {
             exitError(err.message);
         });
-        result.bodyHTML = await page.content();
+
+        await page.waitFor(parseInt(timeout * 0.1));
+
+        if (result.contentType.indexOf('xml') === -1 && result.contentType.indexOf('json') === -1) {
+            result.bodyHTML = await page.content();
+        }
+
+        // let screenshotFile = '/tmp/' + Math.round(Math.random()*1000000000) + '.png';
+        // await page.screenshot({path: screenshotFile});
+        // result.screenshot = screenshotFile;
+
         resolve(result);
     })
 }
@@ -126,16 +201,15 @@ async function call(url, timeout) {
     let browser;
 
     setTimeout(function () {
-        exitError('Timeout after ' + timeout + ' ms.');
+        exitTimeout(result);
     }, timeout);
 
     try {
         (async () => {
             browser = await puppeteer.launch({'headless': true, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
-            let result = await collectData(browser, url);
-
-            console.log(JSON.stringify(result, null, 2));
+            await collectData(browser, url);
             await browser.close();
+            exitSuccess(result);
             process.exit(0);
         })();
     }
@@ -153,14 +227,28 @@ async function call(url, timeout) {
 const args = process.argv.slice(2);
 
 const url = args[0];
-const timeout = args[1] || 29000;
+const timeout = parseInt(args[1] || 29000);
 const cookieString = args[2] || "";
 
-const pageTimeout = parseInt(timeout) + 1000;
+const pageTimeout = parseInt(timeout) + 5000;
 
 const urlArray = url.split("/");
 const domain = urlArray[2];
 
 const filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
+
+let result = {};
+result.url = url;
+result.pageSize = 0;
+result.request_total = 0;
+result.request_success = 0;
+result.request_failed = 0;
+result.requests = {};
+result.js_errors = [];
+result.bodyHTML = '';
+result.contentType = '';
+result.screenshot = '';
+result.timing = {};
+result.cookies = {};
 
 call(url, timeout, cookieString);

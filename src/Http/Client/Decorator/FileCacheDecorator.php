@@ -7,7 +7,7 @@ use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 
-class FileCacheDecorator extends CacheDecorator
+class FileCacheDecorator extends CacheDecorator implements ClientDecorator
 {
     const CACHE_DIRECTORY_DEFAULT = '/tmp/cache/http/';
 
@@ -18,7 +18,7 @@ class FileCacheDecorator extends CacheDecorator
         }
 
         if (!$expiresAfter) {
-            $expiresAfter = new \DateInterval('PT55M');
+            $expiresAfter = new \DateInterval('PT45M');
         }
 
         $filesystemAdapter = new Local($cacheDirectory);
