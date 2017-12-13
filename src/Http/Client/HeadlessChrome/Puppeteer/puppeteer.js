@@ -190,6 +190,13 @@ async function collectData(browser, url) {
             result.bodyHTML = await page.content();
         }
 
+        result.timing.navigation = await page.evaluate(() => {
+            const result = {};
+            for (const key of Object.keys(window.performance.timing.__proto__))
+                result[key] = window.performance.timing[key];
+            return result;
+        });
+
         // let screenshotFile = '/tmp/' + Math.round(Math.random()*1000000000) + '.png';
         // await page.screenshot({path: screenshotFile});
         // result.screenshot = screenshotFile;

@@ -44,9 +44,15 @@ class HeadlessChromeClient implements HttpClient
             $response->setIsTimeout();
         }
 
-        $startTime = $masterRequest["time_start"];
-        $stopTime = $masterRequest["time_finished"];
-        $duration = $stopTime - $startTime;
+        if (array_key_exists('navigation', $plainResponse['timing']) && array_key_exists('requestStart', $plainResponse['timing']['navigation'])) {
+            $requestStart = $plainResponse['timing']['navigation']['requestStart'];
+            $responseStart = $plainResponse['timing']['navigation']['responseStart'];
+            $duration = $responseStart - $requestStart;
+        } else {
+            $startTime = $masterRequest["time_start"];
+            $stopTime = $masterRequest["time_finished"];
+            $duration = $stopTime - $startTime;
+        }
         $response->setDuration($duration);
 
         $response->setCookies($plainResponse['cookies']);
