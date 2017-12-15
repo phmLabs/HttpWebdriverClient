@@ -28,7 +28,14 @@ class HeadlessChromeClient implements HttpClient
         $resources = array();
 
         foreach ($requests as $key => $resource) {
-            $resources[] = ['name' => $key];
+            $resourceElement = ['name' => $key];
+
+            if (array_key_exists('http_status', $resource)) {
+                $resourceElement['http_status'] = $resource['http_status'];
+            } else {
+                $resourceElement['http_status'] = -1;
+            }
+            $resources[] = $resourceElement;
         }
 
         $response = new HeadlessChromeResponse($masterRequest['http_status'], $plainResponse['bodyHTML'], $request, $resources, $masterRequest['response_headers'], $request->getUri());
