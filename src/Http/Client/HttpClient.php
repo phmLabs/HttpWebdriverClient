@@ -29,4 +29,6 @@ interface HttpClient
      * @return string
      */
     public function getClientType();
+
+    public function setOption($key, $value);
 }

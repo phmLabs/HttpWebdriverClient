@@ -38,7 +38,9 @@ class HeadlessChromeClient implements HttpClient
             $resources[] = $resourceElement;
         }
 
-        $response = new HeadlessChromeResponse($masterRequest['http_status'], $plainResponse['bodyHTML'], $request, $resources, $masterRequest['response_headers'], $request->getUri());
+        $content = $this->repairContent($plainResponse['bodyHTML']);
+
+        $response = new HeadlessChromeResponse($masterRequest['http_status'], $content, $request, $resources, $masterRequest['response_headers'], $request->getUri());
         $response->setJavaScriptErrors($plainResponse['js_errors']);
 
         if ($plainResponse['screenshot']) {
@@ -49,14 +51,26 @@ class HeadlessChromeClient implements HttpClient
             $response->setIsTimeout();
         }
 
-        $startTime = $masterRequest["time_start"];
-        $stopTime = $masterRequest["time_finished"];
-        $duration = $stopTime - $startTime;
+        if (array_key_exists('navigation', $plainResponse['timing']) && array_key_exists('requestStart', $plainResponse['timing']['navigation'])) {
+            $requestStart = $plainResponse['timing']['navigation']['requestStart'];
+            $responseStart = $plainResponse['timing']['navigation']['responseStart'];
+            $duration = $responseStart - $requestStart;
+        } else {
+            $startTime = $masterRequest["time_start"];
+            $stopTime = $masterRequest["time_finished"];
+            $duration = $stopTime - $startTime;
+        }
         $response->setDuration($duration);
 
         $response->setCookies($plainResponse['cookies']);
 
         return $response;
+    }
+
+    private function repairContent($content)
+    {
+        $content = str_replace('<iframe style="position: absolute; top: -10000px; left: -1000px;"></iframe>', '', $content);
+        return $content;
     }
 
     private function sendHeadlessChromeRequest(RequestInterface $request, $retries = 2)
@@ -138,6 +152,10 @@ class HeadlessChromeClient implements HttpClient
      * It is not needed for headless chrome but the interface forces it.
      */
     public function close()
+    {
+    }
+
+    public function setOption($key, $value)
     {
     }
 }

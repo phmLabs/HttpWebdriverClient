@@ -45,9 +45,7 @@ class GuzzleClient implements HttpClient
     private function getClient()
     {
         if (!isset($this->client)) {
-            $this->client = new Client(
-                $this->options
-            );
+            $this->client = new Client($this->options);
         }
 
         return $this->client;

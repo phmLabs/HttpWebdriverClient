@@ -13,7 +13,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 use whm\Html\Uri;
 
-declare(ticks = 1);
+declare(ticks=1);
 
 class ChromeClient implements HttpClient
 {
@@ -343,5 +343,10 @@ class ChromeClient implements HttpClient
     public function getClientType()
     {
         return self::CLIENT_TYPE;
+    }
+
+    public function setOption($key, $value)
+    {
+        // TODO: Implement setOption() method.
     }
 }

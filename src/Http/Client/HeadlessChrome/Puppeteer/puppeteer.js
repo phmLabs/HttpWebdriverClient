@@ -34,6 +34,7 @@ async function collectData(browser, url) {
         await page.setRequestInterception(true);
 
         let firstResponse = true;
+        let firstNetwork = true;
 
         /**
          * Exit on error
@@ -158,16 +159,13 @@ async function collectData(browser, url) {
 
 
         // see https://github.com/GoogleChrome/puppeteer/issues/1274
-        /*page._client.on('Network.dataReceived', async event => {
+        page._client.on('Network.dataReceived', async event => {
             const request = await page._networkManager._requestIdToRequest.get(event.requestId);
-            if (request) {
-                url = request.url;
-                if (!result.requests[url]) {
-                    result.requests[url] = {};
-                }
-                result.requests[url].size_raw += parseInt(event.dataLength);
+            if (firstNetwork) {
+                firstNetwork = false;
+                result.timing.data_received = new Date().valueOf();
             }
-        });*/
+        });
 
         const viewport = {
             "width": 1680,
@@ -179,15 +177,25 @@ async function collectData(browser, url) {
         };
 
         await page.setViewport(viewport);
+
+        result.timing.start = new Date().valueOf();
+
         await page.goto(url, {'timeout': pageTimeout, 'waitUntil': 'load'}).catch(function (err) {
             exitError(err.message);
         });
 
         await page.waitFor(parseInt(timeout * 0.1));
 
-        if (result.contentType.indexOf('xml') === -1) {
+        if (result.contentType.indexOf('xml') === -1 && result.contentType.indexOf('json') === -1) {
             result.bodyHTML = await page.content();
         }
+
+        result.timing.navigation = await page.evaluate(() => {
+            const result = {};
+            for (const key of Object.keys(window.performance.timing.__proto__))
+                result[key] = window.performance.timing[key];
+            return result;
+        });
 
         // let screenshotFile = '/tmp/' + Math.round(Math.random()*1000000000) + '.png';
         // await page.screenshot({path: screenshotFile});
@@ -248,7 +256,7 @@ result.js_errors = [];
 result.bodyHTML = '';
 result.contentType = '';
 result.screenshot = '';
-result.timing = {};
 result.cookies = {};
+result.timing = {};
 
 call(url, timeout, cookieString);
