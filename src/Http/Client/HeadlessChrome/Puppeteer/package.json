@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "mime": "^2.0.3",
     "puppeteer": "^0.13.0"
   }
 }
