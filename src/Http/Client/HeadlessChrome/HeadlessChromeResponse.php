@@ -4,10 +4,11 @@ namespace phm\HttpWebdriverClient\Http\Client\HeadlessChrome;
 
 use phm\HttpWebdriverClient\Http\Client\Chrome\ChromeResponse;
 use phm\HttpWebdriverClient\Http\Response\CookieAwareResponse;
+use phm\HttpWebdriverClient\Http\Response\RequestAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\ScreenshotAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\TimeoutAwareResponse;
 
-class HeadlessChromeResponse extends ChromeResponse implements TimeoutAwareResponse, ScreenshotAwareResponse, CookieAwareResponse
+class HeadlessChromeResponse extends ChromeResponse implements TimeoutAwareResponse, ScreenshotAwareResponse, CookieAwareResponse, RequestAwareResponse
 {
     private $isTimeout = false;
     private $screenshot;

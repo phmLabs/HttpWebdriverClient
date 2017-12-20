@@ -31,7 +31,6 @@ function exitTimeout(result) {
 async function collectData(browser, url) {
     return new Promise(async (resolve, reject) => {
         const page = await browser.newPage();
-        await page.setRequestInterception(true);
 
         let firstResponse = true;
         let firstNetwork = true;
@@ -157,7 +156,6 @@ async function collectData(browser, url) {
             });
         });
 
-
         // see https://github.com/GoogleChrome/puppeteer/issues/1274
         page._client.on('Network.dataReceived', async event => {
             const request = await page._networkManager._requestIdToRequest.get(event.requestId);
@@ -167,18 +165,11 @@ async function collectData(browser, url) {
             }
         });
 
-        const viewport = {
-            "width": 1680,
-            "height": 953,
-            "scale": 1,
-            "isMobile": false,
-            "hasTouch": false,
-            "isLandscape": true
-        };
-
-        await page.setViewport(viewport);
-
         result.timing.start = new Date().valueOf();
+
+        await page.setRequestInterception(true);
+        await page.setUserAgent(userAgent);
+        await page.setViewport(viewport);
 
         await page.goto(url, {'timeout': pageTimeout, 'waitUntil': 'load'}).catch(function (err) {
             exitError(err.message);
@@ -243,6 +234,8 @@ const pageTimeout = parseInt(timeout) + 5000;
 const urlArray = url.split("/");
 const domain = urlArray[2];
 
+const userAgent = args[3];
+const viewport = JSON.parse(args[4]);
 const filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
 
 let result = {};

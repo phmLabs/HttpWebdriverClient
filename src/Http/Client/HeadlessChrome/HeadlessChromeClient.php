@@ -4,7 +4,11 @@ namespace phm\HttpWebdriverClient\Http\Client\HeadlessChrome;
 
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\Client\TimeOutException;
+use phm\HttpWebdriverClient\Http\Request\Device\DefaultDevice;
+use phm\HttpWebdriverClient\Http\Request\UserAgentAwareRequest;
+use phm\HttpWebdriverClient\Http\Request\ViewportAwareRequest;
 use Psr\Http\Message\RequestInterface;
+use whm\Html\CookieAware;
 use whm\Html\Uri;
 
 class HeadlessChromeClient implements HttpClient
@@ -93,11 +97,31 @@ class HeadlessChromeClient implements HttpClient
     {
         $file = sys_get_temp_dir() . md5(microtime()) . '.json';
 
-        $uri = $request->getUri();
-        /** @var Uri $uri */
-        $cookieString = $uri->getCookieString();
+        $cookieString = $request->getHeader('cookie');
+        if (!$cookieString) {
+            $uri = $request->getUri();
+            if ($uri instanceof CookieAware) {
+                $cookieString = $uri->getCookieString();
+            }
+        }
 
-        $command = 'node ' . __DIR__ . '/Puppeteer/puppeteer.js "' . (string)$request->getUri() . '" ' . $this->chromeTimeout . ' "' . $cookieString . '" > ' . $file;
+        if (false && $request instanceof ViewportAwareRequest) {
+            $viewport = $request->getViewport();
+            $viewportJson = json_encode($viewport);
+        } else {
+            $standardDevice = new DefaultDevice();
+            $viewportJson = json_encode($standardDevice->getViewport());
+        }
+
+        if ($request instanceof UserAgentAwareRequest) {
+            $userAgent = $request->getUserAgent();
+        } else {
+            $standardDevice = new DefaultDevice();
+            $userAgent = $standardDevice->getUserAgent();
+        }
+
+        $command = 'node ' . __DIR__ . '/Puppeteer/puppeteer.js "' . (string)$request->getUri() . '" ' . $this->chromeTimeout . ' "' . $cookieString . '" "' . $userAgent . '" \'' . $viewportJson . '\' > ' . $file;
+
         exec($command, $output, $return);
 
         $responseJson = trim(file_get_contents($file));

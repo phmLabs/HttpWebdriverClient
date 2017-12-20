@@ -5,6 +5,7 @@ namespace phm\HttpWebdriverClient\Http\Client\Decorator;
 use Cache\Adapter\Common\CacheItem;
 use phm\HttpWebdriverClient\Http\Client\Guzzle\Response;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
+use phm\HttpWebdriverClient\Http\Request\CacheAwareRequest;
 use phm\HttpWebdriverClient\Http\Response\TimeoutAwareResponse;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
@@ -101,17 +102,21 @@ class CacheDecorator implements HttpClient
 
     private function getHash(RequestInterface $request)
     {
-        $headers = $request->getHeaders();
+        if ($request instanceof CacheAwareRequest) {
+            return $request->getHash();
+        } else {
+            $headers = $request->getHeaders();
 
-        // @todo should  be part of the guzzle client
-        if (array_key_exists('User-Agent', $headers)) {
-            if (strpos($headers['User-Agent'][0], 'GuzzleHttp') === 0) {
-                unset($headers['User-Agent']);
+            // @todo should  be part of the guzzle client
+            if (array_key_exists('User-Agent', $headers)) {
+                if (strpos($headers['User-Agent'][0], 'GuzzleHttp') === 0) {
+                    unset($headers['User-Agent']);
+                }
             }
+            $identifier = (string)$request->getUri() . json_encode($headers) . $request->getMethod() . $this->client->getClientType();
+            $hash = md5($identifier);
+            return $hash;
         }
-        $identifier = (string)$request->getUri() . json_encode($headers) . $request->getMethod() . $this->client->getClientType();
-        $hash = md5($identifier);
-        return $hash;
     }
 
     private function serializeResponse(ResponseInterface $response)
