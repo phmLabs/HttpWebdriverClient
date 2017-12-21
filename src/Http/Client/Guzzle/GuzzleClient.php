@@ -11,6 +11,7 @@ use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RedirectMiddleware;
 use GuzzleHttp\TransferStats;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
+use phm\HttpWebdriverClient\Http\Request\UserAgentAwareRequest;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use whm\Html\CookieAware;
@@ -57,22 +58,11 @@ class GuzzleClient implements HttpClient
      */
     public function sendRequest(RequestInterface $request)
     {
-        $request = $this->handleCookies($request);
-        $response = $this->getClient()->send($this->handleCookies($request));
-        return new GuzzleResponse($response, $request);
-    }
-
-    private function handleCookies(RequestInterface $request)
-    {
-        $uri = $request->getUri();
-
-        if ($uri instanceof CookieAware) {
-            if ($uri->hasCookies()) {
-                $request = $request->withAddedHeader('Cookie', $uri->getCookieString());
-            }
+        if ($request instanceof UserAgentAwareRequest) {
+            $request = $request->withAddedHeader('User-Agent', $request->getUserAgent());
         }
-
-        return $request;
+        $response = $this->getClient()->send($request);
+        return new GuzzleResponse($response, $request);
     }
 
     /**
@@ -81,10 +71,6 @@ class GuzzleClient implements HttpClient
      */
     public function sendRequests(array $requests, $failOnError = false)
     {
-        foreach ($requests as $key => $request) {
-            $requests[$key] = $this->handleCookies($request);
-        }
-
         $promises = [];
         $stats = [];
 
