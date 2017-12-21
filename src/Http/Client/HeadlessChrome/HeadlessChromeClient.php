@@ -2,6 +2,7 @@
 
 namespace phm\HttpWebdriverClient\Http\Client\HeadlessChrome;
 
+use GuzzleHttp\Psr7\Request;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\Client\TimeOutException;
 use phm\HttpWebdriverClient\Http\Request\Device\DefaultDevice;
@@ -9,7 +10,6 @@ use phm\HttpWebdriverClient\Http\Request\UserAgentAwareRequest;
 use phm\HttpWebdriverClient\Http\Request\ViewportAwareRequest;
 use Psr\Http\Message\RequestInterface;
 use whm\Html\CookieAware;
-use whm\Html\Uri;
 
 class HeadlessChromeClient implements HttpClient
 {
@@ -93,17 +93,22 @@ class HeadlessChromeClient implements HttpClient
         throw  $exception;
     }
 
+    private function getCookieString(RequestInterface $request)
+    {
+        $cookieHeader = $request->getHeader('cookie');
+
+        if (count($cookieHeader) > 0) {
+            return $cookieHeader[0];
+        } else {
+            return '';
+        }
+    }
+
     private function processHeadlessChromeRequest(RequestInterface $request)
     {
         $file = sys_get_temp_dir() . md5(microtime()) . '.json';
 
-        $cookieString = $request->getHeader('cookie');
-        if (!$cookieString) {
-            $uri = $request->getUri();
-            if ($uri instanceof CookieAware) {
-                $cookieString = $uri->getCookieString();
-            }
-        }
+        $cookieString = $this->getCookieString($request);
 
         if (false && $request instanceof ViewportAwareRequest) {
             $viewport = $request->getViewport();

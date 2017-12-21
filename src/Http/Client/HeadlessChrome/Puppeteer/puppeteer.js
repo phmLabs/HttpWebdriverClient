@@ -205,7 +205,11 @@ async function call(url, timeout) {
 
     try {
         (async () => {
-            browser = await puppeteer.launch({'headless': true, "args": ['--no-sandbox', '--disable-setuid-sandbox']});
+            browser = await puppeteer.launch({
+                'headless': true,
+                "args": ['--no-sandbox', '--disable-setuid-sandbox'],
+                'ignoreHTTPSErrors': true
+            });
             await collectData(browser, url);
             await browser.close();
             exitSuccess(result);
