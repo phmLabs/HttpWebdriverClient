@@ -240,6 +240,7 @@ const domain = urlArray[2];
 
 const userAgent = args[3];
 const viewport = JSON.parse(args[4]);
+
 const filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
 
 let result = {};
