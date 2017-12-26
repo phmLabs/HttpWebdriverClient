@@ -25,7 +25,7 @@ class HeadlessChromeResponse extends ChromeResponse implements TimeoutAwareRespo
         return $this->isTimeout;
     }
 
-    public function setScreenshot($screenshotPath)
+    public function setScreenshotFromFile($screenshotPath)
     {
         $this->screenshot = imagecreatefrompng($screenshotPath);
     }

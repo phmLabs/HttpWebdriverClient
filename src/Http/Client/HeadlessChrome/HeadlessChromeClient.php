@@ -48,7 +48,8 @@ class HeadlessChromeClient implements HttpClient
         $response->setJavaScriptErrors($plainResponse['js_errors']);
 
         if ($plainResponse['screenshot']) {
-            $response->setScreenshot($plainResponse['screenshot']);
+            $response->setScreenshotFromFile($plainResponse['screenshot']);
+            unlink($plainResponse['screenshot']);
         }
 
         if ($plainResponse['status'] == 'timeout') {
@@ -65,7 +66,6 @@ class HeadlessChromeClient implements HttpClient
             $duration = $stopTime - $startTime;
         }
         $response->setDuration($duration);
-
         $response->setCookies($plainResponse['cookies']);
 
         return $response;

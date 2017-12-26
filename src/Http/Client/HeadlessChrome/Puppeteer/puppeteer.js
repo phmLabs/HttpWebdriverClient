@@ -188,9 +188,9 @@ async function collectData(browser, url) {
             return result;
         });
 
-        // let screenshotFile = '/tmp/' + Math.round(Math.random()*1000000000) + '.png';
-        // await page.screenshot({path: screenshotFile});
-        // result.screenshot = screenshotFile;
+        let screenshotFile = screenshotDir + Math.round(Math.random() * 1000000000) + '.png';
+        await page.screenshot({path: screenshotFile});
+        result.screenshot = screenshotFile;
 
         resolve(result);
     })
@@ -240,6 +240,8 @@ const domain = urlArray[2];
 
 const userAgent = args[3];
 const viewport = JSON.parse(args[4]);
+
+const screenshotDir = '/tmp/';
 
 const filteredUrls = fs.readFileSync(filterFile).toString('utf-8').split("\n");
 
