@@ -2,7 +2,7 @@
 
 namespace phm\HttpWebdriverClient\Http\Request;
 
-use phm\HttpWebdriverClient\Http\Request\Device\Device;
+use Leankoala\Devices\Device;
 use Psr\Http\Message\RequestInterface;
 
 interface DeviceAwareRequest extends RequestInterface, UserAgentAwareRequest, ViewportAwareRequest

@@ -3,12 +3,15 @@
 namespace phm\HttpWebdriverClient\Http\Request;
 
 use GuzzleHttp\Psr7\Request;
+use Leankoala\Devices\Device;
+use Leankoala\Devices\DeviceFactory;
+use Leankoala\Devices\Viewport;
 use phm\HttpWebdriverClient\Http\Cookie\CookieHelper;
-use phm\HttpWebdriverClient\Http\Request\Device\Device;
-use phm\HttpWebdriverClient\Http\Request\Device\DefaultDevice;
 
 class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRequest, CookieAwareRequest
 {
+    const DEFAULT_DEVICE = 'MacBookPro152017';
+
     private $viewport;
     private $userAgent;
 
@@ -19,7 +22,10 @@ class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRe
     public function __construct($method, $uri, array $headers = [], $body = null, $version = '1.1')
     {
         parent::__construct($method, $uri, $headers, $body, $version);
-        $this->setDevice(new DefaultDevice());
+
+        $factory = new DeviceFactory();
+        $defaultDevice = $factory->create(self::DEFAULT_DEVICE);
+        $this->setDevice($defaultDevice);
     }
 
     public function setDevice(Device $device)
@@ -72,6 +78,8 @@ class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRe
         }
 
         $new = $this->withAddedHeader(CookieHelper::HEADER_NAME, $cookieString);
+
+        /** @var self $new */
         $new->setCookies($cookies);
 
         return $new;

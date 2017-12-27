@@ -2,6 +2,7 @@
 
 namespace phm\HttpWebdriverClient\Http\Request;
 
+use Leankoala\Devices\Viewport;
 use Psr\Http\Message\RequestInterface;
 
 interface ViewportAwareRequest extends RequestInterface

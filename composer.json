@@ -1,5 +1,6 @@
 {
   "name": "phmlabs/httpwebdriveradapter",
+  "minimum-stability": "dev",
   "description": "",
   "require": {
     "php": ">= 5.4.0",

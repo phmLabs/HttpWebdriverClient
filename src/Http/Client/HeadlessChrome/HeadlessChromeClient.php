@@ -3,6 +3,7 @@
 namespace phm\HttpWebdriverClient\Http\Client\HeadlessChrome;
 
 use GuzzleHttp\Psr7\Request;
+use Leankoala\Devices\DeviceFactory;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\Client\TimeOutException;
 use phm\HttpWebdriverClient\Http\Request\Device\DefaultDevice;
@@ -15,7 +16,11 @@ class HeadlessChromeClient implements HttpClient
 {
     const CLIENT_TYPE = "headless_chrome";
 
+    const DEFAULT_DEVICE_IDENTIFIER = 'MacBookPro152017';
+
     private $chromeTimeout;
+
+    private $defaultdDevice;
 
     public function __construct($chromeTimeOut = 31000)
     {
@@ -93,6 +98,15 @@ class HeadlessChromeClient implements HttpClient
         throw  $exception;
     }
 
+    private function getDefaultDevice()
+    {
+        if (!$this->defaultdDevice) {
+            $factory = new DeviceFactory();
+            $this->defaultdDevice = $factory->create(self::DEFAULT_DEVICE_IDENTIFIER);
+        }
+        return $this->defaultdDevice;
+    }
+
     private function getCookieString(RequestInterface $request)
     {
         $cookieHeader = $request->getHeader('cookie');
@@ -114,15 +128,13 @@ class HeadlessChromeClient implements HttpClient
             $viewport = $request->getViewport();
             $viewportJson = json_encode($viewport);
         } else {
-            $standardDevice = new DefaultDevice();
-            $viewportJson = json_encode($standardDevice->getViewport());
+            $viewportJson = json_encode($this->getDefaultDevice()->getViewport());
         }
 
         if ($request instanceof UserAgentAwareRequest) {
             $userAgent = $request->getUserAgent();
         } else {
-            $standardDevice = new DefaultDevice();
-            $userAgent = $standardDevice->getUserAgent();
+            $userAgent = $this->getDefaultDevice()->getUserAgent();
         }
 
         $command = 'node ' . __DIR__ . '/Puppeteer/puppeteer.js "' . (string)$request->getUri() . '" ' . $this->chromeTimeout . ' "' . $cookieString . '" "' . $userAgent . '" \'' . $viewportJson . '\' > ' . $file;
@@ -137,11 +149,12 @@ class HeadlessChromeClient implements HttpClient
         }
 
         $plainResponse = json_decode($responseJson, true);
-        $requests = $plainResponse['requests'];
 
         if (!$plainResponse) {
             throw new \RuntimeException('Error occured: ' . $responseJson);
         }
+
+        $requests = $plainResponse['requests'];
 
         if (array_key_exists('type', $plainResponse) and $plainResponse['type'] == 'error') {
             throw new \Exception('Unable to GET ' . (string)$request->getUri() . '. Error message: ' . $plainResponse['message']);
