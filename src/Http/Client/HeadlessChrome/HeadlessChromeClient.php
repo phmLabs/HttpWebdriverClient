@@ -2,15 +2,12 @@
 
 namespace phm\HttpWebdriverClient\Http\Client\HeadlessChrome;
 
-use GuzzleHttp\Psr7\Request;
 use Leankoala\Devices\DeviceFactory;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\Client\TimeOutException;
-use phm\HttpWebdriverClient\Http\Request\Device\DefaultDevice;
 use phm\HttpWebdriverClient\Http\Request\UserAgentAwareRequest;
 use phm\HttpWebdriverClient\Http\Request\ViewportAwareRequest;
 use Psr\Http\Message\RequestInterface;
-use whm\Html\CookieAware;
 
 class HeadlessChromeClient implements HttpClient
 {
@@ -138,7 +135,7 @@ class HeadlessChromeClient implements HttpClient
         }
 
         $command = 'node ' . __DIR__ . '/Puppeteer/puppeteer.js "' . (string)$request->getUri() . '" ' . $this->chromeTimeout . ' "' . $cookieString . '" "' . $userAgent . '" \'' . $viewportJson . '\' > ' . $file;
-        
+
         exec($command, $output, $return);
 
         $responseJson = trim(file_get_contents($file));
