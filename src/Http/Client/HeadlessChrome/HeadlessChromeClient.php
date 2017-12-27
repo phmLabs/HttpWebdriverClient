@@ -124,7 +124,7 @@ class HeadlessChromeClient implements HttpClient
 
         $cookieString = $this->getCookieString($request);
 
-        if (false && $request instanceof ViewportAwareRequest) {
+        if ($request instanceof ViewportAwareRequest) {
             $viewport = $request->getViewport();
             $viewportJson = json_encode($viewport);
         } else {
@@ -138,7 +138,7 @@ class HeadlessChromeClient implements HttpClient
         }
 
         $command = 'node ' . __DIR__ . '/Puppeteer/puppeteer.js "' . (string)$request->getUri() . '" ' . $this->chromeTimeout . ' "' . $cookieString . '" "' . $userAgent . '" \'' . $viewportJson . '\' > ' . $file;
-
+        
         exec($command, $output, $return);
 
         $responseJson = trim(file_get_contents($file));
