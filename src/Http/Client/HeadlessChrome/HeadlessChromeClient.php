@@ -47,10 +47,15 @@ class HeadlessChromeClient implements HttpClient
             $resources[] = $resourceElement;
         }
 
-        $content = $this->repairContent($plainResponse['bodyHTML']);
+        $content = $this->repairContent($plainResponse['bodyDOM']);
+        if (!$content) {
+            $content = $plainResponse['bodyHTML'];
+        }
 
         $response = new HeadlessChromeResponse($masterRequest['http_status'], $content, $request, $resources, $masterRequest['response_headers'], $request->getUri());
         $response->setJavaScriptErrors($plainResponse['js_errors']);
+
+        $response->setHtmlBody($plainResponse['bodyHTML']);
 
         if ($plainResponse['screenshot']) {
             $response->setScreenshotFromFile($plainResponse['screenshot']);
@@ -138,7 +143,7 @@ class HeadlessChromeClient implements HttpClient
         }
 
         $command = 'node ' . __DIR__ . '/Puppeteer/puppeteer.js "' . (string)$request->getUri() . '" ' . $this->chromeTimeout . ' "' . $cookieString . '" "' . $userAgent . '" \'' . $viewportJson . '\' > ' . $file;
-        
+
         exec($command, $output, $return);
 
         $responseJson = trim(file_get_contents($file));

@@ -4,16 +4,19 @@ namespace phm\HttpWebdriverClient\Http\Client\HeadlessChrome;
 
 use phm\HttpWebdriverClient\Http\Client\Chrome\ChromeResponse;
 use phm\HttpWebdriverClient\Http\Response\CookieAwareResponse;
+use phm\HttpWebdriverClient\Http\Response\DomAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\RequestAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\ScreenshotAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\TimeoutAwareResponse;
 
-class HeadlessChromeResponse extends ChromeResponse implements TimeoutAwareResponse, ScreenshotAwareResponse, CookieAwareResponse, RequestAwareResponse
+class HeadlessChromeResponse extends ChromeResponse implements TimeoutAwareResponse, ScreenshotAwareResponse, CookieAwareResponse, RequestAwareResponse, DomAwareResponse
 {
     private $isTimeout = false;
     private $screenshot;
 
     private $cookies = array();
+
+    private $htmlBody;
 
     public function setIsTimeout()
     {
@@ -65,5 +68,20 @@ class HeadlessChromeResponse extends ChromeResponse implements TimeoutAwareRespo
             $count += count($cookies);
         }
         return $count;
+    }
+
+    public function getHtmlBody()
+    {
+        return $this->htmlBody;
+    }
+
+    public function getDomBody()
+    {
+        return $this->getBody();
+    }
+
+    public function setHtmlBody($htmlBody)
+    {
+        $this->htmlBody = $htmlBody;
     }
 }

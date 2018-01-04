@@ -178,7 +178,7 @@ async function collectData(browser, url) {
         await page.waitFor(parseInt(timeout * 0.1));
 
         if (result.contentType.indexOf('xml') === -1 && result.contentType.indexOf('json') === -1) {
-            result.bodyHTML = await page.content();
+            result.bodyDOM = await page.content();
         }
 
         result.timing.navigation = await page.evaluate(() => {
@@ -254,6 +254,7 @@ result.request_failed = 0;
 result.requests = {};
 result.js_errors = [];
 result.bodyHTML = '';
+result.bodyDOM = '';
 result.contentType = '';
 result.screenshot = '';
 result.cookies = {};
