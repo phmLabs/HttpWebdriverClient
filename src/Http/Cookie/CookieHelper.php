@@ -4,8 +4,17 @@ namespace phm\HttpWebdriverClient\Http\Cookie;
 
 abstract class CookieHelper
 {
+    /**
+     * The default http cookie name
+     */
     const HEADER_NAME = 'cookie';
 
+    /**
+     * Convert a key value array to a valid cookie string
+     *
+     * @param array $cookieArray
+     * @return string
+     */
     public static function toCookieString(array $cookieArray = [])
     {
         $cookieString = "";
@@ -17,6 +26,13 @@ abstract class CookieHelper
         return $cookieString;
     }
 
+    /**
+     * Merge to cookie strings
+     *
+     * @param $string1
+     * @param $string2
+     * @return string
+     */
     public static function mergeCookieStrings($string1, $string2)
     {
         if ($string1 == '') {
