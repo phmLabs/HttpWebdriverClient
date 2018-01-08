@@ -80,7 +80,20 @@ class HeadlessChromeClient implements HttpClient
 
     private function repairContent($content)
     {
-        $content = str_replace('<iframe style="position: absolute; top: -10000px; left: -1000px;"></iframe>', '', $content);
+        preg_match('@<head(.*)</head>@s', $content, $matches);
+
+        if (count($matches) > 0) {
+            $head = $matches[0];
+            preg_match_all('@<iframe(.*?)</iframe>@s', $head, $iframeMatches);
+
+            if (count($iframeMatches) > 0) {
+                $foundIframes = (array)$iframeMatches[0];
+                foreach ($foundIframes as $foundIframe) {
+                    $content = str_replace($foundIframe, '', $content);
+                }
+            }
+        }
+
         return $content;
     }
 
