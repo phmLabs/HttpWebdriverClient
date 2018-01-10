@@ -18,9 +18,8 @@ function exitError(msg) {
 function exitSuccess(result) {
     result.status = "success";
     console.log(JSON.stringify(result, null, 2));
-    //  process.exit(0);
+    process.exit(0);
 }
-
 
 function exitTimeout(result) {
     result.status = "timeout";
@@ -171,8 +170,9 @@ async function collectData(browser, url) {
         await page.setUserAgent(userAgent);
         await page.setViewport(viewport);
 
-        await page.goto(url, {'timeout': pageTimeout, 'waitUntil': 'load'}).catch(function (err) {
-            exitError(err.message);
+        await page.goto(url, {'timeout': pageTimeout, 'waitUntil': 'load'}).catch(async function (err) {
+            result.bodyDOM = await page.content();
+            exitTimeout(err.message);
         });
 
         await page.waitFor(parseInt(timeout * 0.1));
