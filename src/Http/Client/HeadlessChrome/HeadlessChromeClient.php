@@ -36,6 +36,12 @@ class HeadlessChromeClient implements HttpClient
         foreach ($requests as $key => $resource) {
             $resourceElement = ['name' => $key];
 
+            if (array_key_exists('type', $resource)) {
+                $resourceElement['type'] = $resource['type'];
+            } else {
+                $resourceElement['type'] = 'unknown';
+            }
+
             if (array_key_exists('http_status', $resource)) {
                 $resourceElement['http_status'] = $resource['http_status'];
             } else {
