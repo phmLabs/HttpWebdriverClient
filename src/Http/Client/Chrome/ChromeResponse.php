@@ -231,7 +231,7 @@ class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, Jav
         return $this->jsErrors;
     }
 
-    function jsonSerialize()
+    public function jsonSerialize()
     {
         return [
             'duration' => $this->getDuration(),

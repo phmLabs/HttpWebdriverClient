@@ -10,6 +10,9 @@ use phm\HttpWebdriverClient\Http\Cookie\CookieHelper;
 
 class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRequest, CookieAwareRequest
 {
+    const METHOD_GET = 'GET';
+    const METHOD_POST = 'POST';
+
     const DEFAULT_DEVICE = 'MacBookPro152017';
 
     private $viewport;
