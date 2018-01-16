@@ -3,10 +3,10 @@
 namespace phm\HttpWebdriverClient\Http\Client\Decorator;
 
 use Cache\Adapter\Common\CacheItem;
-use phm\HttpWebdriverClient\Http\Client\Guzzle\Response;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\Request\CacheAwareRequest;
 use phm\HttpWebdriverClient\Http\Response\CacheAwareResponse;
+use phm\HttpWebdriverClient\Http\Response\RequestAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\TimeoutAwareResponse;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
@@ -18,8 +18,6 @@ class CacheDecorator implements HttpClient
     private $client;
 
     private $expiresAfter;
-
-    private $active = true;
 
     private $cacheOnTimeout = false;
 
@@ -37,7 +35,7 @@ class CacheDecorator implements HttpClient
 
     public function sendRequest(RequestInterface $request, $forceRefresh = false)
     {
-        if ($this->active) {
+        if ($request instanceof CacheAwareRequest && $request->isCacheAllowed()) {
             $key = $this->getHash($request);
 
             if (!$this->cacheItemPool->hasItem($key) || $forceRefresh) {
@@ -65,32 +63,30 @@ class CacheDecorator implements HttpClient
 
     public function sendRequests(array $requests, $forceRefresh = false)
     {
-        if ($this->active) {
-            $responses = array();
+        $responses = array();
 
-            foreach ($requests as $id => $request) {
-                $key = $this->getHash($request);
+        foreach ($requests as $id => $request) {
+            $key = $this->getHash($request);
+            if ($request instanceof CacheAwareRequest && $request->isCacheAllowed()) {
                 if ($this->cacheItemPool->hasItem($key)) {
                     $responses[] = $this->unserializeResponse($this->cacheItemPool->getItem($key)->get());
                     unset($requests[$id]);
                 }
             }
-
-            if (count($requests) > 0) {
-                $newResponses = $this->client->sendRequests($requests);
-
-                foreach ($newResponses as $newResponse) {
-                    /** @var Response $newResponse */
-                    $key = $this->getHash($newResponse->getRequest());
-                    $this->cacheResponse($key, $newResponse);
-                }
-                $responses = array_merge($responses, $newResponses);
-            }
-
-            return $responses;
-        } else {
-            return $this->client->sendRequests($requests);
         }
+
+        if (count($requests) > 0) {
+            $newResponses = $this->client->sendRequests($requests);
+
+            foreach ($newResponses as $newResponse) {
+                /** @var RequestAwareResponse $newResponse */
+                $key = $this->getHash($newResponse->getRequest());
+                $this->cacheResponse($key, $newResponse);
+            }
+            $responses = array_merge($responses, $newResponses);
+        }
+
+        return $responses;
     }
 
     /**
@@ -165,10 +161,5 @@ class CacheDecorator implements HttpClient
         } else {
             return $this->client;
         }
-    }
-
-    public function deactivateCache()
-    {
-        $this->active = false;
     }
 }
