@@ -19,6 +19,7 @@ class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRe
     private $userAgent;
 
     private $device;
+    private $allowCache = true;
 
     private $cookies = [];
 
@@ -110,5 +111,15 @@ class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRe
             $this->getUserAgent() . '-' .
             json_encode($this->getViewport()->jsonSerialize())
         );
+    }
+
+    public function setIsCacheAllowed($isAllowed)
+    {
+        $this->allowCache = $isAllowed;
+    }
+
+    public function isCacheAllowed()
+    {
+        return $this->allowCache;
     }
 }
