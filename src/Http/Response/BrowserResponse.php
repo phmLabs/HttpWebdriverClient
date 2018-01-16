@@ -4,7 +4,7 @@ namespace phm\HttpWebdriverClient\Http\Response;
 
 use phm\HttpWebdriverClient\Http\Client\Chrome\ChromeResponse;
 
-class BrowserResponse extends ChromeResponse implements \JsonSerializable, TimeoutAwareResponse, ScreenshotAwareResponse, CookieAwareResponse, RequestAwareResponse, DomAwareResponse
+class BrowserResponse extends ChromeResponse implements \JsonSerializable, CacheAwareResponse, TimeoutAwareResponse, ScreenshotAwareResponse, CookieAwareResponse, RequestAwareResponse, DomAwareResponse
 {
     private $isTimeout = false;
     private $screenshot;
@@ -12,6 +12,8 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Timeo
     private $cookies = array();
 
     private $htmlBody;
+
+    private $fromCache = false;
 
     public function setIsTimeout()
     {
@@ -78,6 +80,22 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Timeo
     public function setHtmlBody($htmlBody)
     {
         $this->htmlBody = $htmlBody;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFromCache()
+    {
+        return $this->fromCache;
+    }
+
+    /**
+     * @param bool $fromCache
+     */
+    public function setFromCache($fromCache)
+    {
+        $this->fromCache = $fromCache;
     }
 
     public function jsonSerialize()

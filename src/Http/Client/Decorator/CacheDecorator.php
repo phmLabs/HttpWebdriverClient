@@ -6,6 +6,7 @@ use Cache\Adapter\Common\CacheItem;
 use phm\HttpWebdriverClient\Http\Client\Guzzle\Response;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\Request\CacheAwareRequest;
+use phm\HttpWebdriverClient\Http\Response\CacheAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\TimeoutAwareResponse;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
@@ -44,9 +45,16 @@ class CacheDecorator implements HttpClient
                 if (!$response instanceof TimeoutAwareResponse || !$response->isTimeout() || $this->cacheOnTimeout) {
                     $this->cacheResponse($key, $response);
                 }
+                if ($response instanceof CacheAwareResponse) {
+                    $response->setFromCache(false);
+                }
             } else {
                 $serializedResponse = $this->cacheItemPool->getItem($key)->get();
                 $response = $this->unserializeResponse($serializedResponse);
+
+                if ($response instanceof CacheAwareResponse) {
+                    $response->setFromCache(true);
+                }
             }
             return $response;
 
