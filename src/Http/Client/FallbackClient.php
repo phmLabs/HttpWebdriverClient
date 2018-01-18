@@ -29,6 +29,8 @@ class FallbackClient implements HttpClient
             try {
                 return $client->sendRequest($request);
             } catch (\Exception $e) {
+                error_log($e->getMessage());
+                var_dump($e->getMessage());
                 $exceptions[] = $e;
             }
         }
