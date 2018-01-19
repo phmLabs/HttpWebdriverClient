@@ -4,7 +4,7 @@ namespace phm\HttpWebdriverClient\Http\Response;
 
 use phm\HttpWebdriverClient\Http\Client\Chrome\ChromeResponse;
 
-class BrowserResponse extends ChromeResponse implements \JsonSerializable, CacheAwareResponse, TimeoutAwareResponse, ScreenshotAwareResponse, CookieAwareResponse, RequestAwareResponse, DomAwareResponse
+class BrowserResponse extends ChromeResponse implements \JsonSerializable, CacheAwareResponse, TimeoutAwareResponse, ScreenshotAwareResponse, CookieAwareResponse, RequestAwareResponse, DomAwareResponse, TimingAwareResponse
 {
     private $isTimeout = false;
     private $screenshot;
@@ -14,6 +14,9 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
     private $htmlBody;
 
     private $fromCache = false;
+
+    private $timingTtfb = -1;
+    private $timingLoad = -1;
 
     public function setIsTimeout()
     {
@@ -91,11 +94,37 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
     }
 
     /**
+     * @param int $timingTtfb
+     */
+    public function setTimingTtfb($timingTtfb)
+    {
+        $this->timingTtfb = $timingTtfb;
+    }
+
+    /**
+     * @param int $timingLoad
+     */
+    public function setTimingLoad($timingLoad)
+    {
+        $this->timingLoad = $timingLoad;
+    }
+
+    /**
      * @param bool $fromCache
      */
     public function setFromCache($fromCache)
     {
         $this->fromCache = $fromCache;
+    }
+
+    public function getTimeToFirstByte()
+    {
+        return $this->timingTtfb;
+    }
+
+    public function getTimeToLoad()
+    {
+        return $this->timingLoad;
     }
 
     public function jsonSerialize()

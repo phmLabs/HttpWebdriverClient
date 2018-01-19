@@ -73,12 +73,17 @@ class HeadlessChromeClient implements HttpClient
             $requestStart = $plainResponse['timing']['navigation']['requestStart'];
             $responseStart = $plainResponse['timing']['navigation']['responseStart'];
             $duration = $responseStart - $requestStart;
+            $timeToLoad = $plainResponse['timing']['navigation']['loadEventEnd'] - $plainResponse['timing']['navigation']['requestStart'];
+            $response->setTimingLoad($timeToLoad);
         } else {
             $startTime = $masterRequest["time_start"];
             $stopTime = $masterRequest["time_finished"];
             $duration = $stopTime - $startTime;
         }
+
         $response->setDuration($duration);
+        $response->setTimingTtfb($duration);
+
         $response->setCookies($plainResponse['cookies']);
 
         return $response;
