@@ -104,13 +104,19 @@ class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRe
 
     public function getHash()
     {
-        return md5(
-            $this->getMethod() . '-' .
+        $headers = $this->getHeaders();
+
+        if (array_key_exists('Host', $headers) && count($headers['Host']) > 1) {
+            $headers['Host'] = [$headers['Host'][0]];
+        }
+
+        $identifier = $this->getMethod() . '-' .
             (string)$this->getUri() . '-' .
-            json_encode($this->getHeaders()) . '-' .
+            json_encode($headers) . '-' .
             $this->getUserAgent() . '-' .
-            json_encode($this->getViewport()->jsonSerialize())
-        );
+            json_encode($this->getViewport()->jsonSerialize());
+
+        return md5($identifier);
     }
 
     public function setIsCacheAllowed($isAllowed)
