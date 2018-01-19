@@ -164,7 +164,6 @@ class HeadlessChromeClient implements HttpClient
         }
 
         $command = 'node ' . __DIR__ . '/Puppeteer/puppeteer.js "' . (string)$request->getUri() . '" ' . $this->chromeTimeout . ' "' . $cookieString . '" "' . $userAgent . '" \'' . $viewportJson . '\' > ' . $file;
-
         exec($command, $output, $return);
 
         $responseJson = trim(file_get_contents($file));
