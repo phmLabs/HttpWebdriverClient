@@ -30,7 +30,9 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
 
     public function setScreenshotFromFile($screenshotPath)
     {
-        // $this->screenshot = imagecreatefrompng($screenshotPath);
+        if (function_exists('imagecreatefrompng')) {
+            $this->screenshot = imagecreatefrompng($screenshotPath);
+        }
     }
 
     public function getScreenshot()
