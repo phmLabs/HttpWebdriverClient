@@ -5,8 +5,6 @@ namespace phm\HttpWebdriverClient\Http\Client\Guzzle;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Promise;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RedirectMiddleware;
 use GuzzleHttp\TransferStats;
@@ -14,8 +12,13 @@ use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\Request\UserAgentAwareRequest;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use whm\Html\CookieAware;
 
+/**
+ * Class GuzzleClient
+ * @package phm\HttpWebdriverClient\Http\Client\Guzzle
+ *
+ * @todo handle cookies
+ */
 class GuzzleClient implements HttpClient
 {
     const CLIENT_TYPE = "guzzle";
@@ -66,7 +69,7 @@ class GuzzleClient implements HttpClient
     }
 
     /**
-     * @param Request $requests
+     * @param RequestInterface[] $requests
      * @return GuzzleResponse[]
      */
     public function sendRequests(array $requests, $failOnError = false)
@@ -80,13 +83,7 @@ class GuzzleClient implements HttpClient
         }];
 
         foreach ($requests as $key => $request) {
-            $guzzleRequest = new Request(
-                $request->getMethod(),
-                $request->getUri(),
-                $request->getHeaders()
-            );
-
-            $promises[$key] = $this->getClient()->sendAsync($guzzleRequest, $params);
+            $promises[$key] = $this->getClient()->sendAsync($request, $params);
         }
 
         $results = Promise\settle($promises)->wait();

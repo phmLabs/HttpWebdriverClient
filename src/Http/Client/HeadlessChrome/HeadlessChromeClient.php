@@ -24,6 +24,7 @@ class HeadlessChromeClient implements HttpClient
         $this->chromeTimeout = $chromeTimeOut;
     }
 
+
     public function sendRequest(RequestInterface $request)
     {
         $plainResponse = $this->sendHeadlessChromeRequest($request);
@@ -108,6 +109,12 @@ class HeadlessChromeClient implements HttpClient
         return $content;
     }
 
+    /**
+     * @param RequestInterface $request
+     * @param int $retries
+     * @return mixed
+     * @throws \Exception
+     */
     private function sendHeadlessChromeRequest(RequestInterface $request, $retries = 2)
     {
         $exception = null;
@@ -121,7 +128,7 @@ class HeadlessChromeClient implements HttpClient
             }
         }
 
-        throw  $exception;
+        throw $exception;
     }
 
     private function getDefaultDevice()
@@ -164,6 +171,7 @@ class HeadlessChromeClient implements HttpClient
         }
 
         $command = 'node ' . __DIR__ . '/Puppeteer/puppeteer.js "' . (string)$request->getUri() . '" ' . $this->chromeTimeout . ' "' . $cookieString . '" "' . $userAgent . '" \'' . $viewportJson . '\' > ' . $file;
+        // var_dump($command);
         exec($command, $output, $return);
 
         $responseJson = trim(file_get_contents($file));

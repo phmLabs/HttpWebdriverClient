@@ -6,6 +6,7 @@ use GuzzleHttp\Psr7\Response;
 use phm\HttpWebdriverClient\Http\Response\ContentTypeAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\DurationAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\EffectiveUriAwareResponse;
+use phm\HttpWebdriverClient\Http\Response\RequestAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\ResourcesAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\UriAwareResponse;
 use Psr\Http\Message\RequestInterface;
@@ -16,7 +17,7 @@ use whm\Html\Document;
 
 // @todo at the moment all with-methods are not working as they do not decorate the response
 
-class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse, UriAwareResponse, ResourcesAwareResponse, EffectiveUriAwareResponse
+class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse, UriAwareResponse, ResourcesAwareResponse, EffectiveUriAwareResponse, RequestAwareResponse
 {
     private $response;
     private $request;
@@ -192,9 +193,9 @@ class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse,
     {
         $count = 0;
         $resources = $this->getResources();
-
         foreach ($resources as $resource) {
-            if (preg_match($pattern, $resource)) {
+            $element = (string)$resource['name'];
+            if (preg_match('^' . $pattern . '^', $element)) {
                 $count++;
             }
         }
