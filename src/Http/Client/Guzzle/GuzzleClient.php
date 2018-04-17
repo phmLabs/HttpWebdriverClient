@@ -5,8 +5,10 @@ namespace phm\HttpWebdriverClient\Http\Client\Guzzle;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Promise;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RedirectMiddleware;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use phm\HttpWebdriverClient\Http\Client\HttpClient;
 use phm\HttpWebdriverClient\Http\Request\UserAgentAwareRequest;
@@ -28,9 +30,10 @@ class GuzzleClient implements HttpClient
     private $standardHeaders = [];
 
     private $options = [
-        'verify' => false,
-        'decode_content' => false,
-        'allow_redirects' => [
+        RequestOptions::VERIFY => false,
+        RequestOptions::VERSION => 1.1,
+        RequestOptions::DECODE_CONTENT => false,
+        RequestOptions::ALLOW_REDIRECTS => [
             'track_redirects' => true,
         ]];
 
@@ -64,7 +67,9 @@ class GuzzleClient implements HttpClient
         if ($request instanceof UserAgentAwareRequest) {
             $request = $request->withAddedHeader('User-Agent', $request->getUserAgent());
         }
+
         $response = $this->getClient()->send($request);
+
         return new GuzzleResponse($response, $request);
     }
 
@@ -83,7 +88,13 @@ class GuzzleClient implements HttpClient
         }];
 
         foreach ($requests as $key => $request) {
-            $promises[$key] = $this->getClient()->sendAsync($request, $params);
+            $guzzleRequest = new Request(
+                $request->getMethod(),
+                $request->getUri(),
+                $request->getHeaders()
+            );
+
+            $promises[$key] = $this->getClient()->sendAsync($guzzleRequest, $params);
         }
 
         $results = Promise\settle($promises)->wait();
