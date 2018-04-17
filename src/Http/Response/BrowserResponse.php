@@ -7,7 +7,7 @@ use phm\HttpWebdriverClient\Http\Client\Chrome\ChromeResponse;
 class BrowserResponse extends ChromeResponse implements \JsonSerializable, CacheAwareResponse, TimeoutAwareResponse, ScreenshotAwareResponse, CookieAwareResponse, RequestAwareResponse, DomAwareResponse, TimingAwareResponse
 {
     private $isTimeout = false;
-    private $screenshot;
+    private $screenshotString;
 
     private $cookies = array();
 
@@ -30,19 +30,26 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
 
     public function setScreenshotFromFile($screenshotPath)
     {
-        if (function_exists('imagecreatefrompng')) {
-            $this->screenshot = imagecreatefrompng($screenshotPath);
-        }
+        $this->screenshotString = file_get_contents($screenshotPath);
     }
 
     public function getScreenshot()
     {
-        return $this->screenshot;
+        if (function_exists('imagecreatefromstring')) {
+            return imagecreatefromstring($this->screenshotString);
+        } else {
+            throw new \RuntimeException('Method imagecreatefromstring not found. Please install GD lib for php');
+        }
+    }
+
+    public function getScreenshotString()
+    {
+        return $this->screenshotString;
     }
 
     public function hasScreenshot()
     {
-        return !is_null($this->screenshot);
+        return !is_null($this->screenshotString);
     }
 
     public function setCookies($cookieArray)
@@ -136,8 +143,7 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
             // 'domBody' => $this->getDomBody(),
             // 'htmlBody' => $this->getHtmlBody(),
             'headers' => $this->getHeaders(),
-            'cookies' => $this->getCookies(),
-            ''
+            'cookies' => $this->getCookies()
         ];
     }
 }
