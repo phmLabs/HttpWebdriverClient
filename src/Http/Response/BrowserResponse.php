@@ -30,7 +30,8 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
 
     public function setScreenshotFromFile($screenshotPath)
     {
-        $this->screenshotString = file_get_contents($screenshotPath);
+        // @fixme had to switch it of as it is not possible to transfer those binary data via json
+        // $this->screenshotString = file_get_contents($screenshotPath);
     }
 
     public function getScreenshot()
