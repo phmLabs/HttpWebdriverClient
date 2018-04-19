@@ -92,16 +92,24 @@ class HeadlessChromeClient implements HttpClient
 
     private function repairContent($content)
     {
+        $brokenPatterns = [
+            '<iframe(.*?)</iframe>',
+            '<div(.*?)</div>'
+        ];
+
         preg_match('@<head(.*)</head>@s', $content, $matches);
 
         if (count($matches) > 0) {
             $head = $matches[0];
-            preg_match_all('@<iframe(.*?)</iframe>@s', $head, $iframeMatches);
 
-            if (count($iframeMatches) > 0) {
-                $foundIframes = (array)$iframeMatches[0];
-                foreach ($foundIframes as $foundIframe) {
-                    $content = str_replace($foundIframe, '', $content);
+            foreach ($brokenPatterns as $brokenPattern) {
+                preg_match_all('@' . $brokenPattern . '@s', $head, $iframeMatches);
+
+                if (count($iframeMatches) > 0) {
+                    $foundIframes = (array)$iframeMatches[0];
+                    foreach ($foundIframes as $foundIframe) {
+                        $content = str_replace($foundIframe, '', $content);
+                    }
                 }
             }
         }
@@ -151,6 +159,11 @@ class HeadlessChromeClient implements HttpClient
         }
     }
 
+    /**
+     * @param RequestInterface $request
+     * @return mixed
+     * @throws \Exception
+     */
     private function processHeadlessChromeRequest(RequestInterface $request)
     {
         $file = sys_get_temp_dir() . md5(microtime()) . '.json';
@@ -209,7 +222,8 @@ class HeadlessChromeClient implements HttpClient
             try {
                 $responses[] = $this->sendRequest($request);
             } catch (\Exception $e) {
-                echo "Error sending request " . $request->getUri() . '. Message: ' . $e->getMessage() . '.';
+                echo "Error sending request " . $request->getUri() . '. Message: ' . /*$e->getMessage() . */
+                    '.';
             }
         }
 

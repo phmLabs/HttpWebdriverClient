@@ -54,32 +54,32 @@ async function collectData(browser, url) {
             const ts = new Date().valueOf();
             let headers = request.headers;
 
-            result.requests[request.url] = {};
-            result.requests[request.url].time_start = ts;
+            result.requests[request.url()] = {};
+            result.requests[request.url()].time_start = ts;
 
             result.request_total++;
 
             // filter special urls like google analytics collect
-            result.requests[request.url].abort = false;
+            result.requests[request.url()].abort = false;
             filteredUrls.forEach(regex => {
-                if (request.url.match(new RegExp(regex))) {
-                    result.requests[request.url].abort = true;
+                if (request.url().match(new RegExp(regex))) {
+                    result.requests[request.url()].abort = true;
                 }
             });
 
             // only set cookies, if the domain of the request is the same domain of the main request
-            let originDomain = request.url.split('/');
+            let originDomain = request.url().split('/');
             if (originDomain[2] === domain && cookieString !== "") {
                 headers['cookie'] = cookieString;
             }
-            result.requests[request.url].request_headers = request.headers;
+            result.requests[request.url()].request_headers = request.headers;
 
-            result.requests[request.url].method = request.method;
+            result.requests[request.url()].method = request.method;
             if (request.method === 'POST') {
-                result.requests[request.url].postdata = request.postData;
+                result.requests[request.url()].postdata = request.postData;
             }
 
-            if (result.requests[request.url].abort) {
+            if (result.requests[request.url()].abort) {
                 request.abort();
             } else {
                 request.continue({"headers": headers});
@@ -105,14 +105,14 @@ async function collectData(browser, url) {
                 }
             }
 
-            result.requests[response.url].time_tfb = new Date().valueOf();
-            result.requests[response.url].http_status = response.status;
-            result.requests[response.url].type = response.request().resourceType;
+            result.requests[response.url()].time_tfb = new Date().valueOf();
+            result.requests[response.url()].http_status = response.status();
+            result.requests[response.url()].type = response.request().resourceType();
 
-            result.requests[response.url].response_headers = response.headers;
+            result.requests[response.url()].response_headers = response.headers();
 
             if (response.headers['content-length']) {
-                result.requests[response.url].size = response.headers['content-length'];
+                result.requests[response.url()].size = response.headers['content-length'];
                 result.pageSize += parseInt(response.headers['content-length']);
             } else {
                 response.buffer().then(buffer => {
@@ -125,13 +125,13 @@ async function collectData(browser, url) {
         });
 
         page.on('requestfinished', request => {
-            result.requests[request.url].time_finished = new Date().valueOf();
-            result.requests[request.url].success = true;
+            result.requests[request.url()].time_finished = new Date().valueOf();
+            result.requests[request.url()].success = true;
             result.request_success++;
         });
 
         page.on('requestfailed', request => {
-            result.requests[request.url].success = false;
+            result.requests[request.url()].success = false;
             result.request_failed++;
         });
 
@@ -143,7 +143,6 @@ async function collectData(browser, url) {
             frames.forEach(async frame => {
                 let url = frame.url();
                 let cookies = await page.cookies(url);
-
                 let uri = new URL(url);
                 if (uri.hostname) {
                     let domain = uri.protocol + '//' + uri.hostname;
