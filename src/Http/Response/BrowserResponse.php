@@ -31,13 +31,13 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
     public function setScreenshotFromFile($screenshotPath)
     {
         // @fixme had to switch it of as it is not possible to transfer those binary data via json
-        // $this->screenshotString = file_get_contents($screenshotPath);
+        $this->screenshotString = base64_encode(file_get_contents($screenshotPath));
     }
 
     public function getScreenshot()
     {
         if (function_exists('imagecreatefromstring')) {
-            return imagecreatefromstring($this->screenshotString);
+            return imagecreatefromstring(ase64_decode($this->screenshotString));
         } else {
             throw new \RuntimeException('Method imagecreatefromstring not found. Please install GD lib for php');
         }
@@ -45,7 +45,7 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
 
     public function getScreenshotString()
     {
-        return $this->screenshotString;
+        return base64_decode($this->screenshotString);
     }
 
     public function hasScreenshot()
