@@ -37,7 +37,7 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
     public function getScreenshot()
     {
         if (function_exists('imagecreatefromstring')) {
-            return imagecreatefromstring(ase64_decode($this->screenshotString));
+            return imagecreatefromstring(base64_decode($this->screenshotString));
         } else {
             throw new \RuntimeException('Method imagecreatefromstring not found. Please install GD lib for php');
         }
