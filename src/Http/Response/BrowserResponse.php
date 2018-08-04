@@ -30,7 +30,10 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
 
     public function setScreenshotFromFile($screenshotPath)
     {
-        // @fixme had to switch it of as it is not possible to transfer those binary data via json
+        if ($screenshotPath == '') {
+            throw new \RuntimeException('You are trying to set a screenshot with an empty path.');
+        }
+
         $this->screenshotString = base64_encode(file_get_contents($screenshotPath));
     }
 
@@ -55,10 +58,9 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
 
     public function setCookies($cookieArray)
     {
-        foreach ($cookieArray as $domain => $cookies) {
-            foreach ($cookies as $cookie) {
-                $this->cookies[$domain][$cookie['name']] = $cookie;
-            }
+        foreach ($cookieArray as $cookie) {
+            $domain = $cookie['domain'];
+            $this->cookies[$domain][$cookie['name']] = $cookie;
         }
     }
 

@@ -2,7 +2,6 @@
 
 namespace phm\HttpWebdriverClient\Http\Client\Guzzle;
 
-use GuzzleHttp\Psr7\Response;
 use phm\HttpWebdriverClient\Http\Response\ContentTypeAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\DurationAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\EffectiveUriAwareResponse;

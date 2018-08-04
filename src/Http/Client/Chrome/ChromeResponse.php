@@ -169,8 +169,12 @@ class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, Jav
 
         foreach ($this->resources as $request) {
             $url = $request['name'];
-            if (preg_match('`' . $pattern . '`', $url)) {
-                ++$foundCount;
+            $status = $request['http_status'];
+
+            if ($status > 0 && $status < 400) {
+                if (preg_match('`' . $pattern . '`', $url)) {
+                    ++$foundCount;
+                }
             }
         }
 
