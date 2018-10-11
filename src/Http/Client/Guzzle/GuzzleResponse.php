@@ -2,6 +2,7 @@
 
 namespace phm\HttpWebdriverClient\Http\Client\Guzzle;
 
+use phm\HttpWebdriverClient\Http\Response\ContentLengthAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\ContentTypeAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\DurationAwareResponse;
 use phm\HttpWebdriverClient\Http\Response\EffectiveUriAwareResponse;
@@ -16,7 +17,7 @@ use whm\Html\Document;
 
 // @todo at the moment all with-methods are not working as they do not decorate the response
 
-class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse, UriAwareResponse, ResourcesAwareResponse, EffectiveUriAwareResponse, RequestAwareResponse
+class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse, UriAwareResponse, ResourcesAwareResponse, EffectiveUriAwareResponse, RequestAwareResponse, ContentLengthAwareResponse
 {
     private $response;
     private $request;
@@ -177,6 +178,10 @@ class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse,
 
     public function getResources()
     {
+        if (strpos($this->getContentType(), 'json') !== false) {
+            return [];
+        }
+
         $htmlDocument = new Document((string)$this->getBody());
         $plainResources = $htmlDocument->getDependencies($this->getUri()->withPath(''), false);
 
@@ -199,6 +204,11 @@ class GuzzleResponse implements DurationAwareResponse, ContentTypeAwareResponse,
             }
         }
         return $count;
+    }
+
+    public function getContentLength()
+    {
+        return strlen((string)$this->response->getBody());
     }
 
     /**
