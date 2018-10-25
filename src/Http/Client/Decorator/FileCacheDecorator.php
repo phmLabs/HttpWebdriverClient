@@ -11,10 +11,21 @@ class FileCacheDecorator extends CacheDecorator implements ClientDecorator
 {
     const CACHE_DIRECTORY_DEFAULT = '/tmp/cache/http/';
 
+    /**
+     * FileCacheDecorator constructor.
+     * @param HttpClient $client
+     * @param null $cacheDirectory
+     * @param null $expiresAfter
+     * @throws \Exception
+     */
     public function __construct(HttpClient $client, $cacheDirectory = null, $expiresAfter = null)
     {
         if (!$cacheDirectory) {
             $cacheDirectory = self::CACHE_DIRECTORY_DEFAULT;
+        }
+
+        if (!file_exists($cacheDirectory)) {
+            mkdir($cacheDirectory, 0777, true);
         }
 
         if (!$expiresAfter) {
