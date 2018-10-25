@@ -27,7 +27,10 @@ class GuzzleClient implements HttpClient
 
     private $client;
 
-    private $standardHeaders = [];
+    private $standardHeaders = [
+        'Accept-Encoding' => 'gzip',
+        'Connection' => 'keep-alive'
+    ];
 
     private $options = [
         RequestOptions::VERIFY => false,
@@ -37,9 +40,13 @@ class GuzzleClient implements HttpClient
             'track_redirects' => true,
         ]];
 
-    public function __construct($standardHeaders = ['Accept-Encoding' => 'gzip', 'Connection' => 'keep-alive'], $timeout = 10)
+    public function __construct($standardHeaders = null, $timeout = 10)
     {
-        $this->options = array_merge($this->options, ['headers' => $standardHeaders, 'timeout' => $timeout,]);
+        if ($standardHeaders) {
+            $this->standardHeaders = $standardHeaders;
+        }
+
+        $this->options = array_merge($this->options, ['headers' => $this->standardHeaders, 'timeout' => $timeout,]);
         $this->standardHeaders = $standardHeaders;
     }
 
@@ -88,10 +95,12 @@ class GuzzleClient implements HttpClient
         }];
 
         foreach ($requests as $key => $request) {
+
             $guzzleRequest = new Request(
                 $request->getMethod(),
                 $request->getUri(),
-                $request->getHeaders()
+                $request->getHeaders(),
+                $request->getBody()
             );
 
             $promises[$key] = $this->getClient()->sendAsync($guzzleRequest, $params);

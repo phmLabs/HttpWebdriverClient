@@ -30,7 +30,6 @@ class FallbackClient implements HttpClient
                 return $client->sendRequest($request);
             } catch (\Exception $e) {
                 error_log($e->getMessage());
-                var_dump($e->getMessage());
                 $exceptions[] = $e;
             }
         }
@@ -46,6 +45,7 @@ class FallbackClient implements HttpClient
             try {
                 return $client->sendRequests($requests);
             } catch (\Exception $e) {
+                error_log($e->getMessage());
                 $exceptions[] = $e;
             }
         }
