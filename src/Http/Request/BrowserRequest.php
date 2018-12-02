@@ -8,7 +8,7 @@ use Leankoala\Devices\DeviceFactory;
 use Leankoala\Devices\Viewport;
 use phm\HttpWebdriverClient\Http\Cookie\CookieHelper;
 
-class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRequest, CookieAwareRequest
+class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRequest, CookieAwareRequest, RequestFilterAwareRequest
 {
     const METHOD_GET = 'GET';
     const METHOD_POST = 'POST';
@@ -22,6 +22,11 @@ class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRe
     private $allowCache = true;
 
     private $cookies = [];
+
+    /**
+     * @var string[]
+     */
+    private $filteredRequests = [];
 
     public function __construct($method, $uri, array $headers = [], $body = null, $version = '1.1')
     {
@@ -127,5 +132,21 @@ class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRe
     public function isCacheAllowed()
     {
         return $this->allowCache;
+    }
+
+    /**
+     * @param string $requestRegEx
+     */
+    public function addFilteredRequest($requestRegEx)
+    {
+        $this->filteredRequests[] = $requestRegEx;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getFilteredRequests()
+    {
+        return $this->filteredRequests;
     }
 }
