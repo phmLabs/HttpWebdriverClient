@@ -11,6 +11,9 @@ class MultiRequestsException extends \Exception
         $this->exceptions = $exceptions;
     }
 
+    /**
+     * @return \Exception[]
+     */
     public function getExceptions()
     {
         return $this->exceptions;
