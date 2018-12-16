@@ -71,13 +71,8 @@ class GuzzleClient implements HttpClient
      */
     public function sendRequest(RequestInterface $request)
     {
-        if ($request instanceof UserAgentAwareRequest) {
-            $request = $request->withAddedHeader('User-Agent', $request->getUserAgent());
-        }
-
-        $response = $this->getClient()->send($request);
-
-        return new GuzzleResponse($response, $request);
+        $responses = $this->sendRequests([$request]);
+        return array_pop($responses);
     }
 
     /**
@@ -88,6 +83,12 @@ class GuzzleClient implements HttpClient
     {
         $promises = [];
         $stats = [];
+
+        foreach ($requests as $key => $request) {
+            if ($request instanceof UserAgentAwareRequest) {
+                $requests[$key] = $request->withAddedHeader('User-Agent', $request->getUserAgent());
+            }
+        }
 
         $params = ['on_stats' => function (TransferStats $transferStats) use (&$stats) {
             $stats[(string)($transferStats->getRequest()->getUri())]['totalTime'] = $transferStats->getTransferTime();
