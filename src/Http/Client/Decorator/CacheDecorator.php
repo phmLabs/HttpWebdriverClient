@@ -39,11 +39,8 @@ class CacheDecorator implements HttpClient
             $key = $this->getHash($request);
 
             if (!$this->cacheItemPool->hasItem($key) || $forceRefresh) {
-                $response = $this->client->sendRequest($request);
 
-                if (is_null($response)) {
-                    throw new \RuntimeException('sendRequest on $client (' . get_class($this->client) . ', ' . (string)$request->getUri() . ') returned null.');
-                }
+                $response = $this->client->sendRequest($request);
 
                 if (!$response instanceof TimeoutAwareResponse || !$response->isTimeout() || $this->cacheOnTimeout) {
                     $this->cacheResponse($key, $response);

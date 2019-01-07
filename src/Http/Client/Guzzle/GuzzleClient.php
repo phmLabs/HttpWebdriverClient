@@ -71,7 +71,7 @@ class GuzzleClient implements HttpClient
      */
     public function sendRequest(RequestInterface $request)
     {
-        $responses = $this->sendRequests([$request]);
+        $responses = $this->sendRequests([$request], true);
         return array_pop($responses);
     }
 
