@@ -11,4 +11,8 @@ interface InteractionProcessor
     public function getPosition($elementIdentifier);
 
     public function endInteraction();
+
+    public function runSequence($equence);
+
+    public function getSessionIdentifier();
 }
