@@ -4,7 +4,7 @@ namespace phm\HttpWebdriverClient\Http\Response;
 
 use Psr\Http\Message\ResponseInterface;
 
-interface TimingAwareResponse extends ResponseInterface
+interface TimingAwareResponse extends ResponseInterface, TimeoutAwareResponse
 {
     /**
      * Return the time to first byte

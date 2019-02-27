@@ -18,6 +18,8 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
     private $timingTtfb = -1;
     private $timingLoad = -1;
 
+    private $timeoutTime = -1;
+
     public function setIsTimeout()
     {
         $this->isTimeout = true;
@@ -26,6 +28,16 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
     public function isTimeout()
     {
         return $this->isTimeout;
+    }
+
+    public function setTimeoutTime($timeoutTime)
+    {
+        $this->timeoutTime = $timeoutTime;
+    }
+
+    public function getTimeoutTime()
+    {
+        return $this->timeoutTime;
     }
 
     public function setScreenshotFromFile($screenshotPath)
