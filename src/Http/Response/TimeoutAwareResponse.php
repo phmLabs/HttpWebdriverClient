@@ -10,4 +10,11 @@ interface TimeoutAwareResponse extends ResponseInterface
      * @return boolean
      */
     public function isTimeout();
+
+    /**
+     * Returns the timeout time in milliseconds
+     *
+     * @return integer
+     */
+    public function getTimeoutTime();
 }
