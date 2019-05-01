@@ -2,7 +2,7 @@
 
 namespace phm\HttpWebdriverClient\Http\Response\Interaction;
 
-class Position
+class Position implements \JsonSerializable
 {
     /**
      * @var float
@@ -69,5 +69,15 @@ class Position
     public function getRight()
     {
         return $this->right;
+    }
+
+    public function jsonSerialize()
+    {
+        return [
+            'top' => $this->top,
+            'left' => $this->left,
+            'bottom' => $this->bottom,
+            'right' => $this->right
+        ];
     }
 }
