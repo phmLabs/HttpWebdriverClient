@@ -148,7 +148,7 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
 
     public function getTimeToFirstByte()
     {
-        return max(0, $this->timingTtfb =;
+        return max(0, $this->timingTtfb);
     }
 
     public function getTimeToLoad()
