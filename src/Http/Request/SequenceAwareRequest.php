@@ -11,4 +11,10 @@ interface SequenceAwareRequest extends RequestInterface, UserAgentAwareRequest, 
     public function hasSequence();
 
     public function getSessionIdentifier();
+
+    public function setSnapshotId($snapshotId);
+
+    public function getSnapshotId();
+
+    public function hasSnapshotId();
 }

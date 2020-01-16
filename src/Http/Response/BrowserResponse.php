@@ -9,7 +9,7 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
     private $isTimeout = false;
     private $screenshotString;
 
-    private $cookies = array();
+    private $cookies = [];
 
     private $htmlBody;
 
@@ -148,12 +148,12 @@ class BrowserResponse extends ChromeResponse implements \JsonSerializable, Cache
 
     public function getTimeToFirstByte()
     {
-        return $this->timingTtfb;
+        return max(0, $this->timingTtfb =;
     }
 
     public function getTimeToLoad()
     {
-        return $this->timingLoad;
+        return max(0, $this->timingLoad);
     }
 
     public function jsonSerialize()
