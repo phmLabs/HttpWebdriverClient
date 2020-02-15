@@ -8,12 +8,14 @@ use Leankoala\Devices\DeviceFactory;
 use Leankoala\Devices\Viewport;
 use phm\HttpWebdriverClient\Http\Cookie\CookieHelper;
 
-class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRequest, CookieAwareRequest, RequestFilterAwareRequest
+class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRequest, CookieAwareRequest, RequestFilterAwareRequest, TimeoutAwareRequest
 {
     const METHOD_GET = 'GET';
     const METHOD_POST = 'POST';
 
     const DEFAULT_DEVICE = 'MacBookPro152017';
+
+    const TIMEOUT_RULE_DEFAULT = 'load';
 
     private $viewport;
     private $userAgent;
@@ -22,6 +24,9 @@ class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRe
     private $allowCache = true;
 
     private $cookies = [];
+
+    private $timeoutRule = self::TIMEOUT_RULE_DEFAULT;
+    private $timeout = false;
 
     /**
      * @var string[]
@@ -116,10 +121,10 @@ class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRe
         }
 
         $identifier = $this->getMethod() . '-' .
-            (string)$this->getUri() . '-' .
-            json_encode($headers) . '-' .
-            $this->getUserAgent() . '-' .
-            json_encode($this->getViewport()->jsonSerialize());
+                      (string)$this->getUri() . '-' .
+                      json_encode($headers) . '-' .
+                      $this->getUserAgent() . '-' .
+                      json_encode($this->getViewport()->jsonSerialize());
 
         return md5($identifier);
     }
@@ -149,4 +154,25 @@ class BrowserRequest extends Request implements DeviceAwareRequest, CacheAwareRe
     {
         return $this->filteredRequests;
     }
+
+    public function getTimeout()
+    {
+        return $this->timeout;
+    }
+
+    public function setTimeout($timeout)
+    {
+        $this->timeout = $timeout;
+    }
+
+    public function setTimeoutRule($timeoutRule)
+    {
+        $this->timeoutRule = $timeoutRule;
+    }
+
+    public function getTimeoutRule()
+    {
+        return $this->timeoutRule;
+    }
+
 }

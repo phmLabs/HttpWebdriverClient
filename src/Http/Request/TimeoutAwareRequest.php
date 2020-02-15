@@ -7,4 +7,6 @@ use Psr\Http\Message\RequestInterface;
 interface TimeoutAwareRequest extends RequestInterface
 {
     public function getTimeout();
+
+    public function getTimeoutRule();
 }
