@@ -38,7 +38,8 @@ class GuzzleClient implements HttpClient
         RequestOptions::DECODE_CONTENT => false,
         RequestOptions::ALLOW_REDIRECTS => [
             'track_redirects' => true,
-        ]];
+        ]
+    ];
 
     public function __construct($standardHeaders = null, $timeout = 10)
     {
@@ -46,7 +47,7 @@ class GuzzleClient implements HttpClient
             $this->standardHeaders = $standardHeaders;
         }
 
-        $this->options = array_merge($this->options, ['headers' => $this->standardHeaders, 'timeout' => $timeout,]);
+        $this->options = array_merge($this->options, ['headers' => $this->standardHeaders, 'timeout' => $timeout]);
         $this->standardHeaders = $standardHeaders;
     }
 
@@ -90,10 +91,13 @@ class GuzzleClient implements HttpClient
             }
         }
 
-        $params = ['on_stats' => function (TransferStats $transferStats) use (&$stats) {
-            $stats[(string)($transferStats->getRequest()->getUri())]['totalTime'] = $transferStats->getTransferTime();
-            $stats[(string)($transferStats->getRequest()->getUri())]['request'] = $transferStats->getRequest();
-        }];
+        $params = [
+            'on_stats' => function (TransferStats $transferStats) use (&$stats)
+            {
+                $stats[(string)($transferStats->getRequest()->getUri())]['totalTime'] = $transferStats->getTransferTime();
+                $stats[(string)($transferStats->getRequest()->getUri())]['request'] = $transferStats->getRequest();
+            }
+        ];
 
         foreach ($requests as $key => $request) {
 

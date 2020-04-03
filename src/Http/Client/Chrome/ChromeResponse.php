@@ -35,11 +35,13 @@ class ChromeResponse implements EffectiveUriAwareResponse, DetailedResponse, Jav
 
     /**
      * ChromeResponse constructor.
+     *
      * @param $statusCode
      * @param string $body
      * @param RequestInterface $request
      * @param array $resources
      * @param array $headers
+     * @param UriInterface $effectiveUri
      */
     public function __construct($statusCode, $body = "", RequestInterface $request, array $resources, array $headers, UriInterface $effectiveUri)
     {
