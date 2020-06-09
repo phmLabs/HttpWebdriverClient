@@ -27,6 +27,25 @@ abstract class CookieHelper
     }
 
     /**
+     * Return the cookies as key value pairs from a cookie string.
+     *
+     * @param string $cookieString
+     * @return array
+     */
+    public static function fromCookieString($cookieString)
+    {
+        $cookies = [];
+        $cookieElements = explode(';', $cookieString);
+        foreach ($cookieElements as $cookieElement) {
+            $cookieKeyValue = explode('=', $cookieElement);
+            if (array_key_exists(1, $cookieKeyValue)) {
+                $cookies[$cookieKeyValue[0]] = $cookieKeyValue[1];
+            }
+        }
+        return $cookies;
+    }
+
+    /**
      * Merge to cookie strings
      *
      * @param $string1
